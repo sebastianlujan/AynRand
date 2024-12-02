@@ -4,17 +4,14 @@
 MOVE=sui move
 CLIENT=sui client
 
-## Move
 BUILD=$(MOVE) build --lint
 TEST=$(MOVE) test --lint
 #COV=$(MOVE) coverage summary
 
-
-## 
 FAUCET=$(CLIENT) faucet
 GAS=$(CLIENT) gas
 
-#PUBLISH=$(SUI) publish
+PUBLISH=$(SUI) publish
 UPGRADE=$(SUI) upgrade
 VERIFY=$(SUI) verify
 
@@ -25,8 +22,8 @@ EMOJI_CLEAN=🧹
 #EMOJI_COV=✅
 EMOJI_FAUCET=🫰
 EMOJI_GAS=⛽
-#EMOJI_PUBLISH=🚀
-#EMOJI_UPGRADE=🗿
+EMOJI_PUBLISH=🚀
+EMOJI_UPGRADE=🗿
 EMOJI_VERIFY=🔍
 EMOJI_CONSOLE=🖥️
 EMOJI_HELP=❓
@@ -56,6 +53,8 @@ clean:
 	rm -rf *lock*
 	rm -rf target
 
+
+
 #coverage:
 ##	@echo "$(EMOJI_COV) Generating test coverage reports..."
 ##	$(TEST)
@@ -79,10 +78,12 @@ upgrade:
 verify:
 	@echo "$(EMOJI_VERIFY) Verifying Aynrand!..."
 	$(VERIFY)
-
+	
 console:
 	@echo "$(EMOJI_CONSOLE) Interactive CLI..."
 	$(VERIFY)
+
+
 
 help:
 	@echo "Aynrand tooling"
