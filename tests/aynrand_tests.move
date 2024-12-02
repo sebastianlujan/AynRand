@@ -1,8 +1,7 @@
-/*
 #[test_only]
 module aynrand::aynrand_tests;
 // uncomment this line to import the module
-// use aynrand::aynrand;
+use aynrand::aynrand;
 
 const ENotImplemented: u64 = 0;
 
@@ -15,4 +14,3 @@ fun test_aynrand() {
 fun test_aynrand_fail() {
     abort ENotImplemented
 }
-*/
