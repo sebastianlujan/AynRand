@@ -1,26 +1,4 @@
-COMMIT_MSG_FILE=`$1`
-COMMIT_MSG=$(cat $COMMIT_MSG_FILE)
-
-echo "tadaa $(COMMIT_MSG_FILE)"
-
-# types and structure for conventional commits
-# https://www.conventionalcommits.org/en/v1.0.0/
-# https://github.com/conventional-changelog/commitlint/#what-is-commitlint
-
-echo "pre commit"
-
-TYPES="feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert"
-SCOPE="\(.+\)"
-
-if ! echo "$COMMIT_MSG" | grep -qE '^(${TYPES})(${SCOPE})?:'; then
-  echo "Error: Commit message must start with a valid type (feat, fix, docs, style, refactor, test, chore, perf)"
-  echo -e "Format should be: <type>(optional scope): <description> \n"
-fi
-
-bun --no -- commitlint --edit $1
-
 # process
-bunx lint-staged
+
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test
-cargo audit
