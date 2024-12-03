@@ -1,5 +1,3 @@
-echo "commit"
-npx --no -- commitlint --edit $1
 
 # Use the COMMIT_EDITMSG file directly
 COMMIT_MSG_FILE=$1
@@ -10,28 +8,23 @@ if [ ! -f "$COMMIT_MSG_FILE" ]; then
     exit 1
 fi
 
-echo "Commit message: $COMMIT_MSG"
-
 # types and structure for conventional commits
 # https://www.conventionalcommits.org/en/v1.0.0/
 # https://github.com/conventional-changelog/commitlint/#what-is-commitlint
 TYPES="feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert"
 SCOPE="\(.+\)"
 
-# Use the COMMIT_EDITMSG file directly
-COMMIT_MSG_FILE=".git/COMMIT_EDITMSG"
-
-if [ ! -f "$COMMIT_MSG_FILE" ]; then
-    echo "Error: Commit message file does not exist."
-    exit 1
-fi
-
-
-
 if ! echo "$COMMIT_MSG" | grep -qE '^(${TYPES})(${SCOPE})?:'; then
-  echo "Error: Commit message must start with a valid type (feat, fix, docs, style, refactor, test, chore, perf)"
+  echo "Commit message: $COMMIT_MSG"
+  echo "Error: Commit message must start with a valid type (feat, fix, chore, docs, test, style, refactor, perf, build, ci, revert)"
   echo -e "Format should be: <type>(optional scope): <description> \n"
+  exit 1
 fi
 
-bun --no -- commitlint --edit $1
+echo "Valid commit format ✅"
+
+$(dirname "$0")/dont-trust.sh
+exit 1
+bunx --no -- commitlint --edit $1
+
 
