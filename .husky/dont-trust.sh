@@ -4,11 +4,11 @@
 # G means "good valid signature", N no signature, https://git-scm.com/docs/git-log#Documentation/git-log.txt-emGem
 
 
-VERIFY_SIGNING=$(git log -1 --pretty=%G? | grep -q "G")
+VERIFY_SIGNING=$(git log -1 --pretty=%G?)
 
-if [ ! $VERIFY_SIGNING != "G" ] || [ ! $VERIFY_SIGNING != "E" ]; then
+if [[ "$VERIFY_SIGNING" != 'G' && "$VERIFY_SIGNING" != 'E' ]]; then
     echo "Error: Commit is not signed 💔. Please sign your commit."
     exit 1
 fi
 
-echo "Commit signed! ❤️"
+echo "Commit signed! 🔑"

@@ -10,13 +10,15 @@ fi
 
 # types and structure for conventional commits
 # https://www.conventionalcommits.org/en/v1.0.0/
-# https://github.com/conventional-changelog/commitlint/#what-is-commitlint
+# https://github.com/conventional-changelog/commitlint/#what-is-com/mitlint
 TYPES="feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert"
 SCOPE="\(.+\)"
 
-if ! echo "$COMMIT_MSG" | grep -qE '^(${TYPES})(${SCOPE})?:'; then
-  echo "Commit message: $COMMIT_MSG"
-  echo "Error: Commit message must start with a valid type (feat, fix, chore, docs, test, style, refactor, perf, build, ci, revert)"
+echo "Commit message: $COMMIT_MSG"
+
+if ! echo "$COMMIT_MSG" | grep -qE "^($TYPES)($SCOPE)?:"; then
+  echo "Error: Commit message must start with a valid type"
+  echo -e "feat, fix, chore, docs, test, style, refactor, perf, build, ci, revert"
   echo -e "Format should be: <type>(optional scope): <description> \n"
   exit 1
 fi
@@ -24,7 +26,5 @@ fi
 echo "Valid commit format ✅"
 
 $(dirname "$0")/dont-trust.sh
-exit 1
-bunx --no -- commitlint --edit $1
 
-
+#bunx --no -- commitlint --edit $1
