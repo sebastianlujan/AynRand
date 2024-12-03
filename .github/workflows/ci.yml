@@ -1,0 +1,11 @@
+name: CI for Aynrand
+on: [push]
+jobs:
+    build:
+        runs-on: alpine-latest
+        steps:
+        - uses: actions/checkout@v4
+        - name: Run Makefile
+          run: 
+            bun install
+            make test
