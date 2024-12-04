@@ -36,17 +36,4 @@ module aynrand::ticket;
 
         transfer::public_transfer(adminCap, deployer);
     }
-    
-    //#[allow(lint(self_transfer))]
-    //public fun new(_: &AdminCap, ctx: &mut TxContext ) {
-
-        
-        //let deployer = ctx.sender();
-        //let publisher = package::claim(otw, ctx);
-        
-        //let id = object::new(ctx);
-
-        /// Transfer admin capability to Deployer
-
-    //}
 }
