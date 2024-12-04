@@ -1,16 +1,21 @@
 #[test_only]
-module aynrand::aynrand_tests;
-// uncomment this line to import the module
-use aynrand::aynrand;
+#[allow(unused_use)]
+module aynrand::aynrand_tests {
 
-const ENotImplemented: u64 = 0;
+    use aynrand::aynrand::{Self as ayn};
+    use sui::test_scenario as ts;
+    use sui::sui::SUI;
 
-#[test]
-fun test_aynrand() {
-    // pass
-}
+    const ENotImplemented: u64 = 0;
 
-#[test, expected_failure(abort_code = ::aynrand::aynrand_tests::ENotImplemented)]
-fun test_aynrand_fail() {
-    abort ENotImplemented
+    #[test]
+    fun test_aynrand() {
+        assert!(true, 12);
+    }
+
+    #[test, expected_failure(abort_code = ::aynrand::aynrand_tests::ENotImplemented)]
+    fun test_aynrand_fail() {
+
+        abort ENotImplemented
+    }
 }
