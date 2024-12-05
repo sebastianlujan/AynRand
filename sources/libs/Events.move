@@ -11,6 +11,6 @@ module aynrand::events;
     }
     
     /// Event emiter
-    public(package) fun emit_new_ticket(id: ID, ticket: u64) {
-        event::emit(TicketMinted {id, index: ticket });
+    public fun emit_new_tickets(id: ID, index: u64) {
+        event::emit(TicketMinted {id, index});
     }
