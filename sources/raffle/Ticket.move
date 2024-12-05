@@ -3,8 +3,8 @@
 module aynrand::ticket;
 
     use std::string::String;
-    use sui::{package, table, display, url::{Url}};
-    use aynrand::{ events, access };
+    use sui::{package, table, display, types, url::{Url}};
+    use aynrand::{ events, access, errors };
 
     /// OTW One Time Witness
     /// https://move-book.com/programmability/one-time-witness.html
@@ -30,6 +30,8 @@ module aynrand::ticket;
 
     /// Constructor one time witness
     fun init(otw: TICKET, ctx: &mut TxContext) {
+        /// CEI, Check,Effect,Interaction pattern, 
+        assert!(types::is_one_time_witness(&otw), errors::err_invalid_OTW());
 
         let deployer = ctx.sender();
         let adminCap = access::init_admin<TICKET>(ctx);
