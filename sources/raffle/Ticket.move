@@ -1,5 +1,3 @@
-#[allow(unused_function)]
-
 module aynrand::ticket {
 
     use std::string::{ String };
@@ -19,12 +17,10 @@ module aynrand::ticket {
     }
 
     // Ticket NFT
+    // Ticket Name for the NFT, AYN
     public struct Ticket has key, store {
         id: UID,
-        /// Ticket Name for the NFT, AYN
-        name: String,    
-        /// Fixed price
-        price: u64,
+        name: String,
         is_active: bool
     }
 
@@ -36,32 +32,34 @@ module aynrand::ticket {
         transfer::transfer(adminCap, ctx.sender())
     }
 
-    public entry fun mint(_: &AdminCap, amount: u64, name: String, price: u64, ctx: &mut TxContext) {
-        let mut tickets = vector::empty<Ticket>();
-
+    public entry fun mint(_: &AdminCap, amount: u64, name: String, ctx: &mut TxContext) {
         let mut i = 0;
-        while( i < amount) {
-
+        while(i < amount) {
             let ticket_id = object::new(ctx);
             let ticket_id_object = object::uid_to_inner(&ticket_id);
         
-            tickets.push_back(Ticket {
+            let ticket = Ticket {
                 id: ticket_id,
                 name,
-                price,
                 is_active: false
-            });
+            };
 
-            /// mint and send the NFT to the caller
+            // Transfer the ticket directly to the sender
+            transfer::transfer(ticket, tx_context::sender(ctx));
+
+            // Emit event for the new ticket
             events::emit_new_tickets(ticket_id_object, i);
-
             i = i + 1;
-        };
+        }
     }
 
     public fun burn(tick: Ticket, _: &mut TxContext){
-        let Ticket { id, name, price, is_active }  = tick;
-        id.delete()
+        let Ticket { 
+            id,
+            name: _,
+            is_active: _,
+        }  = tick;
+        object::delete(id);
     }
 
     public fun transfer(ticket: Ticket, to: address, _: &mut TxContext){
@@ -72,10 +70,6 @@ module aynrand::ticket {
     #[test_only]
     public fun name(nft: &Ticket): &String {
         &nft.name
-    }
-    #[test_only]
-    public fun price(nft: &Ticket): &u64 {
-        &nft.price
     }
 
     #[test_only]
