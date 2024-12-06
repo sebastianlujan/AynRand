@@ -5,7 +5,6 @@ module aynrand::ticket {
 
     //use sui::coin::{ Self, Coin};
     //use sui::sui::SUI;
-
     use aynrand::{ events, errors as err};
 
     /// OTW One Time Witness
