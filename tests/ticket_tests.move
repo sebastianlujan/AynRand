@@ -3,31 +3,39 @@ module aynrand::ticket_test {
     use sui::test_scenario::{Self as ts};
     // use aynrand::test_base::{Self as tb};
     
-    use aynrand::ticket;
+    use aynrand::ticket::{Self, Ticket, AdminCap };
     use std::{string::utf8};
 
     /// 1 MIST represent 10^-9 Sui
     const PRICE: u64 = 1_000_000_000;
     const ADMIN: address = @0xCAFE;
-    const TEN_TICKETS: u64 = 10;
+    const TEN: u64 = 10;
 
     #[test]
     fun test_mint_ticket() {
 
         let mut scenario = ts::begin(ADMIN);
-        let ctx = ts::ctx(&mut scenario);
-
-        
-        
-        /// It should be minted an NFT
-        ts::next_tx(&mut scenario, @0x1);
         {
-            let ticket = ts::take_from_sender<ticket::Ticket>(&mut scenario);
-            assert!(ticket::name(&ticket) == utf8(b"test"));
-            assert!(ticket::price(&ticket) == PRICE);
-            ts::return_to_sender(&scenario, ticket);
-        };
-        ts::end(scenario);
+            let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
+            
+            let ctx = ts::ctx(&mut scenario);
+            let tickets = ticket::mint(
+                &admin_cap,
+                TEN,
+                b"TEST".to_string(),
+                PRICE, ctx
+            );
+            // First Tx , mint nft
         
+                assert!(vector::length(&tickets) == TEN);
+                assert!(tickets[0].name() == utf8(b"TEST"));
+                assert!(tickets[0].price() == TEN);
+                assert!(tickets[0].active() == false);
+        
+
+            ts::return_to_sender(&scenario, admin_cap);
+        };
+
+        ts::end(scenario);
     }
 }

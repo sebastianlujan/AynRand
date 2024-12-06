@@ -25,7 +25,7 @@ module aynrand::ticket {
         name: String,    
         /// Fixed price
         price: u64,
-        active: bool
+        is_active: bool
     }
 
     // Constructor one time witness
@@ -36,7 +36,7 @@ module aynrand::ticket {
         transfer::transfer(adminCap, ctx.sender())
     }
 
-    public fun mint(_: &AdminCap, amount: u64, name: String, price: u64, ctx: &mut TxContext): vector<Ticket> {
+    public entry fun mint(_: &AdminCap, amount: u64, name: String, price: u64, ctx: &mut TxContext) {
         let mut tickets = vector::empty<Ticket>();
 
         let mut i = 0;
@@ -49,19 +49,25 @@ module aynrand::ticket {
                 id: ticket_id,
                 name,
                 price,
-                active: false
+                is_active: false
             });
 
+            /// mint and send the NFT to the caller
             events::emit_new_tickets(ticket_id_object, i);
 
             i = i + 1;
         };
-
-        (tickets)
     }
 
-    /// Entrypoint for burning
-    
+    public fun burn(tick: Ticket, _: &mut TxContext){
+        let Ticket { id, name, price, is_active }  = tick;
+        id.delete()
+    }
+
+    public fun transfer(ticket: Ticket, to: address, _: &mut TxContext){
+        transfer::public_transfer(ticket, to);
+    }
+
     // Getter testing functions
     #[test_only]
     public fun name(nft: &Ticket): &String {
@@ -72,4 +78,8 @@ module aynrand::ticket {
         &nft.price
     }
 
+    #[test_only]
+    public fun active(nft: &Ticket): &bool {
+        &nft.is_active
+    }
 }
