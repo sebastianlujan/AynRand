@@ -31,11 +31,9 @@ module aynrand::raffle {
         clock: &Clock,
         ctx: &mut TxContext
     ) {
-        assert!(has_started(raffle, clock), E::raffle_not_started());
+        assert!(has_started(raffle, clock), E::raffle_started());
         assert!(has_ended(raffle, clock), E::raffle_ended());
-        
-        let payment_amount = coin::value(&payment);
-        assert!(has_valid(payment_amount), E::invalid_price());
+        assert!(has_valid(coin::value(&payment)), E::invalid_price());
 
         vector::push_back(&mut raffle.players, tx_context::sender(ctx));
         transfer::public_transfer(payment, tx_context::sender(ctx));
@@ -49,8 +47,8 @@ module aynrand::raffle {
             clock::timestamp_ms(clock) >= raffle.end_time
         }
 
-        public fun has_valid(payment_amount: u64): bool {
-            payment_amount == TICKET_PRICE
+        public fun has_valid(payment: u64): bool {
+            payment == TICKET_PRICE
         }
 
 

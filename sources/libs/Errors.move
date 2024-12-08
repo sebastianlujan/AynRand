@@ -14,7 +14,7 @@ module aynrand::errors;
     public(package) fun invalid_price(): u64 { EInvalidPrice }
 
     const ERaffleHasStarted: u64 = 5;
-    public(package) fun raffle_not_started(): u64 { ERaffleHasStarted }
+    public(package) fun raffle_started(): u64 { ERaffleHasStarted }
     
     const ERaffleHasEnded: u64 = 4;
     public(package) fun raffle_ended(): u64 { ERaffleHasEnded }
