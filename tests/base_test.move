@@ -2,13 +2,13 @@
 module aynrand::base_test {
     use sui::{ address };
 
-/*
-    public fun before(sender: address): (&mut Scenario, &mut TxContext) {
-        let mut scenario = begin(sender);
-        let ctx = ts::ctx(&mut scenario);
-        (&mut scenario, ctx)
-    }
-*/
+    /*
+        public fun before(sender: address): (&mut Scenario, &mut TxContext) {
+            let mut scenario = ts::begin(sender);
+            let ctx = ts::ctx(&mut scenario);
+            (&mut scenario, &mut ctx)
+        }
+    */
     
     const ADMIN_ADDRESS: address = @0xCAFE;
 
