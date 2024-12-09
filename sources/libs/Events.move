@@ -13,4 +13,3 @@ module aynrand::events;
     public fun emit_new_tickets(id: ID, index: u64) {
         event::emit(TicketMinted {id, index});
     }
-    

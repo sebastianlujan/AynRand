@@ -1,17 +1,17 @@
 module aynrand::ticket {
 
     use std::string::{ String };
-    use sui::{ types };
+    use sui::{ types, package };
 
-    //use sui::coin::{ Self, Coin};
-    //use sui::sui::SUI;
     use aynrand::{ events, errors as E};
+    use std::debug;
 
     /// OTW One Time Witness
     /// https://move-book.com/programmability/one-time-witness.html
     public struct TICKET has drop { }
 
-    public struct AdminCap has key{
+    /// AdminCap delegate to capability to mint tickets
+    public struct AdminCap has key {
         id: UID
     }
 
@@ -20,7 +20,7 @@ module aynrand::ticket {
     public struct Ticket has key, store {
         id: UID,
         name: String,
-        is_active: bool,
+        active: bool,
         owner: address
     }
 
@@ -28,57 +28,75 @@ module aynrand::ticket {
     fun init(otw: TICKET, ctx: &mut TxContext) {
         assert!(types::is_one_time_witness(&otw), E::invalid_OTW());
 
-        let adminCap = AdminCap { id: object::new(ctx) };
-        transfer::transfer(adminCap, ctx.sender())
+        let publisher = package::claim(otw, ctx);
+
+        transfer::public_transfer(publisher, tx_context::sender(ctx));
+        transfer::transfer(AdminCap { id: object::new(ctx) }, tx_context::sender(ctx));
     }
 
-    public entry fun mint(_: &AdminCap, amount: u64, name: String, ctx: &mut TxContext) {
-        let mut i = 0;
+    fun mint(_cap: &AdminCap, name: String, ctx: &mut TxContext) {
         let owner = tx_context::sender(ctx);
-
-        while(i < amount) {
-            let ticket_id = object::new(ctx);
-            let ticket_id_object = object::uid_to_inner(&ticket_id);
         
-            let ticket = Ticket {
-                id: ticket_id,
-                name,
-                is_active: false,
-                owner
-            };
+        debug::print(&owner);
 
-            // Transfer the ticket directly to the sender
-            transfer::transfer(ticket, tx_context::sender(ctx));
+        let ticket_id = object::new(ctx);
+        let ticket_id_object = object::uid_to_inner(&ticket_id);
 
-            // Emit event for the new ticket
-            events::emit_new_tickets(ticket_id_object, i);
+        let ticket = Ticket {
+            id: ticket_id,
+            name,
+            active: false,
+            owner: owner
+        };
+
+        debug::print(&ticket);
+
+        // Transfer the ticket directly to the sender
+        transfer::public_transfer(ticket, tx_context::sender(ctx));
+
+        // Emit event for the new ticket
+        events::emit_new_tickets(ticket_id_object, 1);
+    }
+
+   public entry fun create_tickets(_cap: &AdminCap, name: String, amount: u64, ctx: &mut TxContext) {
+        let mut i = 0;
+        while(i < amount) {
+            mint(_cap, name, ctx);
             i = i + 1;
         }
     }
 
-    public fun burn(tick: Ticket, ctx: &mut TxContext){
-        assert!(tick.owner == tx_context::sender(ctx), E::invalid_owner());
-        let Ticket { 
-            id,
-            name: _,
-            is_active: _,
-            owner: _
-        }  = tick;
+    public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
+        assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
+
+        let Ticket { id, name: _, active: _, owner: _ } = ticket;
         object::delete(id);
     }
 
-    public fun transfer(ticket: Ticket, to: address, _: &mut TxContext){
+    public entry fun transfer(ticket: Ticket, to: address) {
         transfer::public_transfer(ticket, to);
     }
 
-    // Getter testing functions
-    #[test_only]
-    public fun name(nft: &Ticket): &String {
-        &nft.name
+    public fun name(ticket: &Ticket): &String {
+        &ticket.name
+    }
+
+    public fun active(ticket: &Ticket): &bool {
+        &ticket.active
+    }
+
+    public fun owner(nft: &Ticket): &address {
+        &nft.owner
     }
 
     #[test_only]
-    public fun active(nft: &Ticket): &bool {
-        &nft.is_active
+    public fun test_new_admin_cap(ctx: &mut TxContext): AdminCap {
+        AdminCap { id: object::new(ctx) }
+    }
+
+    #[test_only]
+    public fun test_destroy_admin_cap(admin_cap: AdminCap) {
+        let AdminCap { id } = admin_cap;
+        object::delete(id);
     }
 }

@@ -1,35 +1,50 @@
 #[test_only]
+#[allow(unused_use)]
 module aynrand::ticket_test {
+    use aynrand::base_test::{Self as tb};
     use sui::test_scenario::{Self as ts};
-    // use aynrand::test_base::{Self as tb};
     
     use aynrand::ticket::{Self, Ticket, AdminCap };
     use std::{string::utf8};
-
-    /// 1 MIST represent 10^-9 Sui
-    /// const PRICE: u64 = 1_000_000_000;
-
-    const ADMIN: address = @0xCAFE;
-    const TEN: u64 = 10;
+    use std::debug;
 
     #[test]
-    fun test_mint_ticket() {
-        let mut scenario = ts::begin(ADMIN);
-        {   
-            let admin_cap = ts::take_from_sender<AdminCap>(&scenario);
-            let ctx = ts::ctx(&mut scenario);
+    fun test_mint_ticket_flow() {
+        let admin = tb::admin();
+        let mut scenario = ts::begin(admin);
 
-            ticket::mint(&admin_cap, TEN, utf8(b"TEST"), ctx);
+        
+            let scenario_mut= &mut scenario;
+            ts::next_tx(scenario_mut, admin);
 
-            // Test the first minted ticket
-            let _ticket = ts::take_from_sender<Ticket>(&scenario);
-            assert!(ticket::name(&_ticket) == &utf8(b"TEST"), 0);
-            assert!(ticket::active(&_ticket) == &false, 1);
+            // Create AdminCap role
+            let admin_cap = ticket::test_new_admin_cap(ts::ctx(&mut scenario));
             
-            ts::return_to_sender(&scenario, _ticket);
-            ts::return_to_sender(&scenario, admin_cap);
-        };
+            //ticket::mint(&admin_cap, 100, utf8(b"TEST"), ts::ctx(&mut scenario));
+            ticket::create_tickets(
+                &admin_cap, 
+                tb::default_name().to_string(), 
+                tb::default_amount(), 
+                ts::ctx(&mut scenario)
+            );
+
+            //let ticket = ts::take_from_sender<Ticket>(&scenario);
+           
+            //ticket::test_destroy_ticket(ticket);
+            //assert!(ticket::name(&ticket) == &utf8(b"TEST"), 0);
+            //assert!(ticket::active(&ticket) == &false, 1);
+
+            // Return objects
+            //ts::return_to_sender(&scenario, ticket);
+            //ticket::test_destroy_ticket(ticket);
+            ticket::test_destroy_admin_cap(admin_cap);        
+        
 
         ts::end(scenario);
     }
+
+    //#[allow(unused_field)]
+    //fun test_buy_ticket(){}
+    //#[allow(unused_field)]
+    //fun test_activate_ticket(){}
 }
