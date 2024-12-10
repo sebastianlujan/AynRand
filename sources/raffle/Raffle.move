@@ -1,4 +1,5 @@
 #[allow(lint(self_transfer))]
+
 module aynrand::raffle;
 
 use aynrand::errors as E;
@@ -38,7 +39,7 @@ public entry fun buy_ticket(
     //Check if the raffle has not started and has not ended
     assert!(!has_started(raffle, clock), E::raffle_started());
     assert!(!has_ended(raffle, clock), E::raffle_ended());
-    assert!(coin::value(&payment) >= TICKET_PRICE, E::insufficient_funds());
+    assert!(has_price_below(coin::value(&payment)), E::insufficient_funds());
 
     let sender = tx_context::sender(ctx);
     assert!(table::contains(&raffle.tickets, sender), E::duplicate_ticket());
@@ -60,14 +61,25 @@ public entry fun buy_ticket(
     );
 }
 
+/// Check if the raffle has started
+/// @param raffle: Raffle object
+/// @param time: Clock object
+/// @return: True if the raffle has started, false otherwise
 public fun has_started(raffle: &Raffle, time: &Clock): bool {
     clock::timestamp_ms(time) >= raffle.start_time
 }
 
+/// Check if the raffle has ended
+/// @param raffle: Raffle object
+/// @param time: Clock object
+/// @return: True if the raffle has ended, false otherwise
 public fun has_ended(raffle: &Raffle, time: &Clock): bool {
     clock::timestamp_ms(time) >= raffle.end_time
 }
 
+/// Check if the payment is below the ticket price
+/// @param payment: Payment object
+/// @return: True if the payment is below the ticket price, false otherwise
 public fun has_price_below(payment: u64): bool {
     payment < TICKET_PRICE
 }
