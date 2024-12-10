@@ -9,13 +9,13 @@ module aynrand::errors;
 
     const EInvalidOwner: u64 = 2;
     public(package) fun invalid_owner(): u64 { EInvalidOwner }
+    const EInsufficientFunds: u64 = 3;
+    public(package) fun insufficient_funds(): u64 { EInsufficientFunds }
 
-    const EInvalidPrice: u64 = 3;
-    public(package) fun invalid_price(): u64 { EInvalidPrice }
-
-    const ERaffleHasStarted: u64 = 5;
+    const ERaffleHasStarted: u64 = 4;
     public(package) fun raffle_started(): u64 { ERaffleHasStarted }
-    
-    const ERaffleHasEnded: u64 = 4;
+    const ERaffleHasEnded: u64 = 5;
     public(package) fun raffle_ended(): u64 { ERaffleHasEnded }
     
+    const EDuplicateTicket: u64 = 6;
+    public(package) fun duplicate_ticket(): u64 { EDuplicateTicket }

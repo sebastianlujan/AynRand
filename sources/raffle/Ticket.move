@@ -1,3 +1,4 @@
+#[allow(lint(self_transfer))]
 module aynrand::ticket {
 
     use std::string::{ String };
@@ -21,7 +22,8 @@ module aynrand::ticket {
         id: UID,
         name: String,
         active: bool,
-        owner: address
+        owner: address,
+        index: u64  // Added to track ticket number
     }
 
     // Constructor one time witness
@@ -34,7 +36,7 @@ module aynrand::ticket {
         transfer::transfer(AdminCap { id: object::new(ctx) }, tx_context::sender(ctx));
     }
 
-    fun mint(_cap: &AdminCap, name: String, ctx: &mut TxContext) {
+    public fun mint(_cap: &AdminCap, name: String, index: u64, ctx: &mut TxContext): Ticket {
         let owner = tx_context::sender(ctx);
         
         debug::print(&owner);
@@ -46,22 +48,19 @@ module aynrand::ticket {
             id: ticket_id,
             name,
             active: false,
-            owner: owner
+            owner,
+            index
         };
 
-        debug::print(&ticket);
-
-        // Transfer the ticket directly to the sender
-        transfer::public_transfer(ticket, tx_context::sender(ctx));
-
-        // Emit event for the new ticket
-        events::emit_new_tickets(ticket_id_object, 1);
+        events::emit_new_tickets(ticket_id_object, index);
+        ticket
     }
 
-   public entry fun create_tickets(_cap: &AdminCap, name: String, amount: u64, ctx: &mut TxContext) {
+    public entry fun create_tickets(_cap: &AdminCap, name: String, amount: u64, ctx: &mut TxContext) {
         let mut i = 0;
         while(i < amount) {
-            mint(_cap, name, ctx);
+            let ticket = mint(_cap, name, i, ctx);
+            transfer::public_transfer(ticket, tx_context::sender(ctx));
             i = i + 1;
         }
     }
@@ -69,7 +68,7 @@ module aynrand::ticket {
     public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
         assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
 
-        let Ticket { id, name: _, active: _, owner: _ } = ticket;
+        let Ticket { id, name: _, active: _, owner: _, index: _ } = ticket;
         object::delete(id);
     }
 
