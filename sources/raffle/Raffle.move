@@ -4,7 +4,9 @@ module aynrand::raffle;
 
 use aynrand::errors as E;
 use aynrand::events;
-use aynrand::ticket::Ticket;
+use aynrand::ticket::{Self, Ticket, AdminCap};
+use std::debug;
+use std::string::String;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
@@ -22,7 +24,28 @@ public struct Raffle has key, store {
     end_time: u64,
     admin: address,
     claimed: bool,
-    ticket_count: u64,
+}
+
+/// Setup tickets by admin
+public entry fun mint_tickets_to_raffle(
+    _cap: &AdminCap,
+    raffle: &mut Raffle,
+    amount: u64,
+    name: String,
+    clock: &Clock,
+    ctx: &mut TxContext,
+) {
+    assert!(tx_context::sender(ctx) == raffle.admin, E::invalid_owner());
+    assert!(!has_started(raffle, clock), E::raffle_started());
+
+    let mut i = 0;
+    while (i < amount) {
+        let nft = ticket::mint(_cap, name, i, ctx);
+        debug::print(&nft);
+
+        table::add(&mut raffle.tickets, tx_context::sender(ctx), nft);
+        i = i + 1;
+    };
 }
 
 /// Buy a ticket for a raffle
@@ -36,13 +59,12 @@ public entry fun buy_ticket(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    //Check if the raffle has not started and has not ended
+    let sender = tx_context::sender(ctx);
+
     assert!(!has_started(raffle, clock), E::raffle_started());
     assert!(!has_ended(raffle, clock), E::raffle_ended());
     assert!(has_price_below(coin::value(&payment)), E::insufficient_funds());
-
-    let sender = tx_context::sender(ctx);
-    assert!(table::contains(&raffle.tickets, sender), E::duplicate_ticket());
+    assert!(!table::contains(&raffle.tickets, sender), E::duplicate_ticket());
 
     let payment_value = coin::value(&payment);
     if (payment_value > TICKET_PRICE) {
@@ -50,10 +72,8 @@ public entry fun buy_ticket(
         transfer::public_transfer(refund, sender);
     };
 
-    // Add payment to prize pool
     balance::join(&mut raffle.prize_pool, coin::into_balance(payment));
 
-    // Emit event
     events::emit_buy_ticket(
         object::uid_to_inner(&raffle.id),
         sender,
@@ -81,7 +101,7 @@ public fun has_ended(raffle: &Raffle, time: &Clock): bool {
 /// @param payment: Payment object
 /// @return: True if the payment is below the ticket price, false otherwise
 public fun has_price_below(payment: u64): bool {
-    payment < TICKET_PRICE
+    payment >= TICKET_PRICE
 }
 
 /// Process the payment and get the refund if the payment is greater than the ticket price
@@ -96,4 +116,59 @@ public fun payment_refund(payment: &mut Coin<SUI>, ctx: &mut TxContext): Coin<SU
     } else {
         coin::zero(ctx)
     }
+}
+
+#[test_only]
+public fun create_for_testing(ctx: &mut TxContext): Raffle {
+    Raffle {
+        id: object::new(ctx),
+        tickets: table::new(ctx),
+        winner: option::none(),
+        prize_pool: balance::zero(),
+        start_time: 0,
+        end_time: 1000,
+        admin: tx_context::sender(ctx),
+        claimed: false,
+    }
+}
+
+#[test_only]
+public fun create_with_time_for_testing(
+    start_time: u64,
+    end_time: u64,
+    ctx: &mut TxContext,
+): Raffle {
+    Raffle {
+        id: object::new(ctx),
+        tickets: table::new(ctx),
+        winner: option::none(),
+        prize_pool: balance::zero(),
+        start_time,
+        end_time,
+        admin: tx_context::sender(ctx),
+        claimed: false,
+    }
+}
+
+#[test_only]
+public fun test_destroy_raffle(raffle: Raffle) {
+    let Raffle {
+        id,
+        mut tickets,
+        winner: _,
+        prize_pool,
+        start_time: _,
+        end_time: _,
+        admin,
+        claimed: _,
+    } = raffle;
+
+    if (table::contains(&tickets, admin)) {
+        let _ticket = table::remove(&mut tickets, admin);
+        ticket::test_destroy_ticket(_ticket);
+    };
+
+    table::destroy_empty(tickets);
+    object::delete(id);
+    balance::destroy_zero(prize_pool);
 }

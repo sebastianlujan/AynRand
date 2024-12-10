@@ -56,15 +56,6 @@ module aynrand::ticket {
         ticket
     }
 
-    public entry fun create_tickets(_cap: &AdminCap, name: String, amount: u64, ctx: &mut TxContext) {
-        let mut i = 0;
-        while(i < amount) {
-            let ticket = mint(_cap, name, i, ctx);
-            transfer::public_transfer(ticket, tx_context::sender(ctx));
-            i = i + 1;
-        }
-    }
-
     public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
         assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
 
@@ -96,6 +87,12 @@ module aynrand::ticket {
     #[test_only]
     public fun test_destroy_admin_cap(admin_cap: AdminCap) {
         let AdminCap { id } = admin_cap;
+        object::delete(id);
+    }
+
+    #[test_only]
+    public fun test_destroy_ticket(ticket: Ticket) {
+        let Ticket { id, name: _, active: _, owner: _, index: _ } = ticket;
         object::delete(id);
     }
 }

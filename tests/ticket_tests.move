@@ -19,14 +19,13 @@ fun test_mint_ticket_flow() {
     // Create AdminCap role
     let admin_cap = ticket::test_new_admin_cap(ts::ctx(&mut scenario));
 
-    ticket::create_tickets(
+    let ticket = ticket::mint(
         &admin_cap, 
         utf8(b"TEST"),
         tb::default_amount(),
         ts::ctx(&mut scenario)
     );
-
-    //ticket::test_destroy_ticket(ticket);
+    ticket::test_destroy_ticket(ticket);
     ticket::test_destroy_admin_cap(admin_cap);
 
     ts::end(scenario);
