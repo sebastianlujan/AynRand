@@ -55,3 +55,7 @@ module aynrand::errors;
     /// Error when prize pool is empty
     const EInsufficientPrizePool: u64 = 14;
     public(package) fun insufficient_prize_pool(): u64 { EInsufficientPrizePool }
+
+    /// Error when unauthorized address attempts to claim prize
+    const ENotAuthorizedToClaim: u64 = 15;
+    public(package) fun not_authorized_to_claim(): u64 { ENotAuthorizedToClaim }
