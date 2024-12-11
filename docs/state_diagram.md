@@ -70,3 +70,5 @@ Next, **Users** can buy tickets by calling the `buy_ticket(payment)` function wh
 After the raffle ends, the **Admin** can draw a winner using the `draw_winner()` function. The system checks if the raffle has ended and uses a random number to pick a winner, triggering the **WinnerSelected** event. If something is wrong, an **Error: Cannot Draw Winner** event is shown.
 
 Finally, the winner can claim their prize by calling the `claim_prize()` function if the raffle is in the **"WinnerDrawn"** state and the prize hasn't been claimed yet. The prize is then transferred from the **PrizePool**, and the **PrizeTransferred** event is triggered. If not, an **Error: Cannot Claim Prize** event is shown.
+
+Come back to the README for the [Class Diagram](../README.md#class-diagram)

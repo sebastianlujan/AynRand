@@ -1,5 +1,9 @@
 # Aynrand
 
+| ![Rather Labs Logo](assets/logo.svg) | **Interview Challenge**: Raffle System |
+|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+
+
 This is a Raffle architecture for Sui move language using good practices for modularity and separation of concerns, implementing a raffle system based on the lesson from the book of move https://move-book.com/ , and lessons from the paper 
 "Building Random, Fair, and Verifiable Games on Blockchain"
 https://arxiv.org/pdf/2310.12305
@@ -8,7 +12,6 @@ The idea is to implement a raffle system that is random, fair, and verifiable si
 
 The name for Aynrand comes from the idea of randomness and fairness, and the fact that the system is not deterministic, but rather random, also the idea of implement a descentralized DRAND Number generator for a next iteration.
 
-fun fact, the name sounds like a mix of Ayndrand and that was the idea.
 ## System Architecture
 
 ### Sequence Diagram
@@ -39,6 +42,7 @@ sequenceDiagram
 
 A more detailed diagram can be found in the [docs](docs/state_diagram.md)
 
+<a id="class-diagram"></a>
 ### Class Diagram
 
 ```mermaid
@@ -123,12 +127,14 @@ It would have been better to implement a toy project first that takes 80% of the
 
 A change of scope from designing the solution based on Drand, which pivoted due to poor UX from generating a random number every 30 seconds, to designing a scheme based on Merkle trees for winner verification and random number generation based on BLS signatures, was discarded due to extra time in understanding the language and resolving errors.
 
+```
 So I thought of using a not-so-secure naive random.
+```
 
 One of the fundamental features of this language is returning objects that do not have drop, for example, and destroying them one by one. Another unique feature is the OTW, one-time witness, which simulates a single execution and refers to the concept of a constructor.
 Regarding defined responsibilities, the raffle handles ticket creation and purchase, as well as prize claim and draw winner. I composed several structures for better understanding and versatility for the architecture.
 
 This is how we define a ticket vault, a prize pool, a raffle config, and a raffle state, and the ticket as a dependency of the raffle.
 
-7. Key Learnings
+# Key Learnings
 This challenge helped me learn about SUI and Move, improve my technical skills, and understand how to design scalable and secure solutions. Even though there were challenges, the lessons learned will be useful for future projects.
