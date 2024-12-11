@@ -120,11 +120,17 @@ public entry fun buy_ticket(
     );
 }
 
-
-// Draw a winner for the raffle, not secure enough, use a secure random number generator based on RAND, or the 
-// proposed random schemes based on https://arxiv.org/pdf/2310.12305
-// Building Random, Fair, and Verifiable Games on Blockchain, Raffle smart contract designs on Sui Network.
-
+/// WARNING: Current random number generation is not secure enough for production use.
+/// For secure randomness, consider:
+/// - Using a secure random number generator based on RAND
+/// - Implementing proposed random schemes from https://arxiv.org/pdf/2310.12305
+/// Building Random, Fair, and Verifiable Games on Blockchain.
+///
+/// Draw a winner for the raffle
+/// @param raffle: The raffle object to draw a winner for
+/// @param clock: Clock object for timing validation
+/// @param r: Random object for secure number generation
+/// @param ctx: Transaction context for sender info
 #[allow(lint(public_random))]
 public entry fun draw_winner(
     raffle: &mut Raffle,
