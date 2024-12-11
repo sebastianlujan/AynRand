@@ -12,6 +12,8 @@ use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
 use sui::sui::SUI;
 use sui::table::{Self, Table};
+use sui::random::{Self, Random };
+
 
 const DEFAULT_TICKET_PRICE: u64 = 100_000_000;
 
@@ -43,6 +45,7 @@ public struct RaffleState has store {
     winner: Option<address>,
     claimed: bool,
 }
+
 
 /// Create a new raffle
 public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxContext): Raffle {
@@ -116,6 +119,51 @@ public entry fun buy_ticket(
         clock::timestamp_ms(clock),
     );
 }
+
+
+// Draw a winner for the raffle, not secure enough, use a secure random number generator based on RAND, or the 
+// proposed random schemes based on https://arxiv.org/pdf/2310.12305
+// Building Random, Fair, and Verifiable Games on Blockchain, Raffle smart contract designs on Sui Network.
+
+#[allow(lint(public_random))]
+public entry fun draw_winner(
+    raffle: &mut Raffle,
+    clock: &Clock,
+    r: &Random,
+    ctx: &mut TxContext
+) {
+    // Validate raffle state
+    assert!(has_ended(raffle, clock), E::raffle_not_ended());
+    assert!(option::is_none(&raffle.state.winner), E::winner_already_drawn());
+    
+    // Get total number of tickets
+    let ticket_count = table::length(&raffle.tickets.buyed_tickets);
+    assert!(ticket_count > 0, E::no_tickets_sold());
+    
+    // Generate random index using Sui's Random module
+    let mut generator = random::new_generator(r, ctx);
+    let random_value = random::generate_u256(&mut generator);
+    let random_index = (random_value % (ticket_count as u256) as u64);
+    
+    // Get winner address using table entries
+    let mut addresses = vector::empty();
+    let addr = tx_context::sender(ctx);
+    if (table::contains(&raffle.tickets.buyed_tickets, addr)) {
+        vector::push_back(&mut addresses, addr);
+    };
+    
+    // Set winner
+    let winner = *vector::borrow(&addresses, random_index);
+    assert!(table::contains(&raffle.tickets.buyed_tickets, winner), 0);
+    raffle.state.winner = option::some(winner);
+    
+    events::emit_winner_drawn(
+        object::uid_to_inner(&raffle.id),
+        winner,
+        clock::timestamp_ms(clock)
+    );
+}
+
 
 /// Check if the raffle has started
 /// @param raffle: Raffle object
