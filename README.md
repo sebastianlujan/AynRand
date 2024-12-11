@@ -95,9 +95,9 @@ A more detailed diagram can be found in the [docs](docs/state_diagram.md)
 
 - **Lifecycle Management**: Raffles progress through distinct states (NotStarted → Active → Ended → WinnerDrawn)
 - **Ticket Management**: Administrators can mint and manage ticket distribution
-- **Prize Pool**: Secure handling of SUI tokens for prizes
+- **Prize Pool**: Secure handling of SUI tokens for a prize pool
 - **Random Winner Selection**: Uses Sui's Random module for winner selection
-- **Prize Claims**: Winners can claim their prizes after drawing
+- **Prize Claims**: A Winner can claim their prize after drawing
 
 ## Technical Refferences
 
@@ -119,22 +119,20 @@ I started thinking with a top-to-bottom approach, a modular architecture for gre
 
 One important lesson learned in Move for Sui is that less is more, so the initial plan to create a reusable module for testing was discarded, and I moved to the test scenario of the Sui framework.
 
-Time Management:
+## Key Learnings
 
-Better planning at the beginning would have helped me learn faster and finish the project on time.
+The assumption of similarity between Rust and Move challenged the initial plan to create a reusable module for testing, and I moved to the test scenario of the Sui framework.
 
 It would have been better to implement a toy project first that takes 80% of the necessary features to quickly understand the language and its perks related to its skill system, which did not allow me to meet the challenge on time.
 
 A change of scope from designing the solution based on Drand, which pivoted due to poor UX from generating a random number every 30 seconds, to designing a scheme based on Merkle trees for winner verification and random number generation based on BLS signatures, was discarded due to extra time in understanding the language and resolving errors.
 
-```
-So I thought of using a not-so-secure naive random.
-```
-
 One of the fundamental features of this language is returning objects that do not have drop, for example, and destroying them one by one. Another unique feature is the OTW, one-time witness, which simulates a single execution and refers to the concept of a constructor.
 Regarding defined responsibilities, the raffle handles ticket creation and purchase, as well as prize claim and draw winner. I composed several structures for better understanding and versatility for the architecture.
 
-This is how we define a ticket vault, a prize pool, a raffle config, and a raffle state, and the ticket as a dependency of the raffle.
+This way is how we define a ticket vault, a prize pool, a raffle config, and a raffle state, and the ticket as a dependency of the raffle.
 
-# Key Learnings
-This challenge helped me learn about SUI and Move, improve my technical skills, and understand how to design scalable and secure solutions. Even though there were challenges, the lessons learned will be useful for future projects.
+## Final thoughts:
+Sui can be a great language for defining real-world assets and financial services, for defining transparency and identity schemes, and for finance. Additionally, consume-on-demand models can be derived, for storage beyond classic blockchain applications and thinking more about communications, due to its compatibility with SNARKs and zero-knowledge proofs, which enables new architectures and greater information compression and speed.
+
+The challenge helped me learn about SUI and Move, improve my technical skills, and understand how to design scalable and secure solutions. Even though there were challenges, the lessons learned will be useful for future projects.
