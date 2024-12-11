@@ -25,11 +25,21 @@ module aynrand::errors;
     const EInsufficientTickets: u64 = 7;
     public(package) fun insufficient_tickets(): u64 { EInsufficientTickets }
 
+    /// Error when trying to draw winner before raffle has ended. 
+    /// This ensures fairness by preventing early winner selection.
     const ERaffleNotEnded: u64 = 8;
     public(package) fun raffle_not_ended(): u64 { ERaffleNotEnded }
 
+    /// Error when attempting to redraw a winner. 
+    /// This prevents manipulation by ensuring only one winner can be drawn.
     const EWinnerAlreadyDrawn: u64 = 9;
     public(package) fun winner_already_drawn(): u64 { EWinnerAlreadyDrawn }
 
+    /// Error when trying to draw winner with no valid tickets.
+    /// This ensures there are actual participants in the raffle.
     const ENoTicketsSold: u64 = 10;
     public(package) fun no_tickets_sold(): u64 { ENoTicketsSold }
+
+    /// Error when attempting an invalid state transition
+    const EInvalidStateTransition: u64 = 11;
+    public(package) fun invalid_state_transition(): u64 { EInvalidStateTransition }

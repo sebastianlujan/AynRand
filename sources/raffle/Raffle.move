@@ -47,6 +47,14 @@ public struct RaffleState has store {
 }
 
 
+// Define the possible states of the raffle
+public enum RaffleLifecycle has copy, drop {
+    NotStarted,
+    Active,
+    Ended,
+    WinnerDrawn,
+}
+
 /// Create a new raffle
 public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxContext): Raffle {
     Raffle {
@@ -68,7 +76,8 @@ public entry fun mint_tickets_to_raffle(
     ctx: &mut TxContext,
 ) {
     assert!(tx_context::sender(ctx) == raffle.config.admin, E::invalid_owner());
-    assert!(!has_started(raffle, clock), E::raffle_started());
+    let state = get_lifecycle_state(raffle, clock);
+    assert!(state == RaffleLifecycle::NotStarted, E::invalid_state_transition());
 
     let mut i = 0;
     while (i < amount) {
@@ -94,10 +103,17 @@ public entry fun buy_ticket(
 ) {
     let sender = tx_context::sender(ctx);
 
+    
+    let state = get_lifecycle_state(raffle, clock);
+    assert!(state == RaffleLifecycle::Active, E::invalid_state_transition());
+
     // Validate raffle state
     assert!(!has_started(raffle, clock), E::raffle_started());
     assert!(!has_ended(raffle, clock), E::raffle_ended());
     assert!(has_price_below(coin::value(&payment)), E::insufficient_funds());
+
+     // Validate state transition
+    validate_state_transition(raffle, clock, RaffleLifecycle::Active);
 
     // Validate ticket state
     assert!(!table::contains(&raffle.tickets.buyed_tickets, sender), E::duplicate_ticket());
@@ -121,10 +137,9 @@ public entry fun buy_ticket(
 }
 
 /// WARNING: Current random number generation is not secure enough for production use.
-/// For secure randomness, consider:
-/// - Using a secure random number generator based on RAND
-/// - Implementing proposed random schemes from https://arxiv.org/pdf/2310.12305
-/// Building Random, Fair, and Verifiable Games on Blockchain.
+/// Use a secure random number generator based on RAND, BLS or ZKP.
+/// Reference: "Building Random, Fair, and Verifiable Games on Blockchain"
+/// https://arxiv.org/pdf/2310.12305
 ///
 /// Draw a winner for the raffle
 /// @param raffle: The raffle object to draw a winner for
@@ -138,8 +153,8 @@ public entry fun draw_winner(
     r: &Random,
     ctx: &mut TxContext
 ) {
-    // Validate raffle state
-    assert!(has_ended(raffle, clock), E::raffle_not_ended());
+    // Validate state transition
+    validate_state_transition(raffle, clock, RaffleLifecycle::Ended);
     assert!(option::is_none(&raffle.state.winner), E::winner_already_drawn());
     
     // Get total number of tickets
@@ -266,4 +281,23 @@ public fun test_destroy_raffle(raffle: Raffle) {
     table::destroy_empty(buyed_tickets);
     object::delete(id);
     balance::destroy_zero(balance);
+}
+
+/// Get current state of the raffle
+public fun get_lifecycle_state(raffle: &Raffle, clock: &Clock): RaffleLifecycle {
+    if (option::is_some(&raffle.state.winner)) {
+        RaffleLifecycle::WinnerDrawn
+    } else if (has_ended(raffle, clock)) {
+        RaffleLifecycle::Ended
+    } else if (has_started(raffle, clock)) {
+        RaffleLifecycle::Active
+    } else {
+        RaffleLifecycle::NotStarted
+    }
+}
+
+/// Validate state transition
+fun validate_state_transition(raffle: &Raffle, clock: &Clock, expected: RaffleLifecycle) {
+    let current_state = get_lifecycle_state(raffle, clock);
+    assert!(current_state == expected, E::invalid_state_transition());
 }
