@@ -59,3 +59,7 @@ module aynrand::errors;
     /// Error when unauthorized address attempts to claim prize
     const ENotAuthorizedToClaim: u64 = 15;
     public(package) fun not_authorized_to_claim(): u64 { ENotAuthorizedToClaim }
+
+    /// Error when selected winner is not a valid ticket holder
+    const EInvalidWinner: u64 = 16;
+    public(package) fun invalid_winner(): u64 { EInvalidWinner }
