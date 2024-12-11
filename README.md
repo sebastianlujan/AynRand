@@ -29,6 +29,16 @@ sequenceDiagram
     RaffleContract->>PrizePool: Withdraw Funds
 ```
 
+- The **Admin** begins the raffle by setting it up and creating tickets for people to purchase.
+
+- **Users** buy these tickets to enter the raffle, and their payments go into the **PrizePool**.
+
+- Once the raffle is over, the system randomly selects a winner.
+
+- The winner claims their prize, and the prize money is transferred to them from the **PrizePool**.
+
+A more detailed diagram can be found in the [docs](docs/state_diagram.md)
+
 ### Class Diagram
 
 ```mermaid
@@ -85,32 +95,40 @@ A more detailed diagram can be found in the [docs](docs/state_diagram.md)
 - **Random Winner Selection**: Uses Sui's Random module for winner selection
 - **Prize Claims**: Winners can claim their prizes after drawing
 
-## Technical Details
+## Technical Refferences
 
 The system uses Sui Move's object model and implements best practices from:
 - [The Move Book](https://move-book.com/)
 - ["Building Random, Fair, and Verifiable Games on Blockchain"](https://arxiv.org/pdf/2310.12305)
 
-## ## How It Works 🎪
+# Lessons Learned
+In this project, I faced many challenges like managing time, resources, learning from documentation, and understanding production projects. I had to decide whether to use Sui or Aptos, as both use the Move language but with differences. I found Sui to be a better and more robust solution based on the toolkit, code readability, and the TVL and ecosystem.
 
-1. **Admin Creates Raffle** 👨‍💼
-   - Sets ticket price
-   - Determines number of tickets
-   - Initializes the raffle state
+To learn the language, I started with the Move book and official documentation, then moved on to reading example code and projects like Kapy Adventure. I also watched videos about Move presentations at Certora.
 
-2. **Users Buy Tickets** 🎟️
-   - Purchase tickets with SUI tokens
-   - Tickets give chance to win
+Sui is a blockchain that comes from the fork of the Libra development teams by Meta, defining an architecture for Diem, their currency, based on Byzantine Fault Tolerance properties and a BLS scheme through validators for ID assignment and transactional object verification. This is very different from the classic non-scalable blockchain model, as it uses a directed acyclic graph model, allowing for greater scalability and becoming the most componentizable.
 
-3. **Prize Pool Grows** 💰
-   - Ticket sales fill prize pool
+## Design Decisions, Modularity:
 
-4. **Winner Selection** 🎲
-   - Random selection using Sui's RNG
-   - Fair and tamper-proof process
-   - Winner automatically determined
+After understanding the language and the skill mechanisms for key, drop, store, and copy, and reviewing the differences between Rust and Move, I also understood the security mechanisms of capabilities, as well as visibility and shared objects.
+I started thinking with a top-to-bottom approach, a modular architecture for greater development flexibility, understanding that the shared object model is the most suitable for creating these structures.
 
-5. **Prize Collection** 🏆
-   - Winner claims prize
-   - Prize pool transferred to winner
-   - Raffle state is reset
+One important lesson learned in Move for Sui is that less is more, so the initial plan to create a reusable module for testing was discarded, and I moved to the test scenario of the Sui framework.
+
+Time Management:
+
+Better planning at the beginning would have helped me learn faster and finish the project on time.
+
+It would have been better to implement a toy project first that takes 80% of the necessary features to quickly understand the language and its perks related to its skill system, which did not allow me to meet the challenge on time.
+
+A change of scope from designing the solution based on Drand, which pivoted due to poor UX from generating a random number every 30 seconds, to designing a scheme based on Merkle trees for winner verification and random number generation based on BLS signatures, was discarded due to extra time in understanding the language and resolving errors.
+
+So I thought of using a not-so-secure naive random.
+
+One of the fundamental features of this language is returning objects that do not have drop, for example, and destroying them one by one. Another unique feature is the OTW, one-time witness, which simulates a single execution and refers to the concept of a constructor.
+Regarding defined responsibilities, the raffle handles ticket creation and purchase, as well as prize claim and draw winner. I composed several structures for better understanding and versatility for the architecture.
+
+This is how we define a ticket vault, a prize pool, a raffle config, and a raffle state, and the ticket as a dependency of the raffle.
+
+7. Key Learnings
+This challenge helped me learn about SUI and Move, improve my technical skills, and understand how to design scalable and secure solutions. Even though there were challenges, the lessons learned will be useful for future projects.
