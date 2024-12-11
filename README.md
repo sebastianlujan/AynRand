@@ -124,7 +124,11 @@ One important lesson learned in Move for Sui is that less is more, so the initia
 The assumption of similarity between Rust and Move challenged the initial plan to create a reusable module for testing, and I moved to the test scenario of the Sui framework.
 
 It would have been better to implement a toy project first that takes 80% of the necessary features to quickly understand the language and its perks related to its skill system, which did not allow me to meet the entire development lifecycle, like testing, automated coverage and deployment, using github actions.
+
+But some precommit and pre validation workflows for conventional commits and gpg verification were implemented.
+
 Coverage need it a custom sui cli compile and run, and this remains out of the scope of this project.
+
 
 A change of scope from designing the solution based on Drand, which pivoted due to poor UX from generating a random number every 30 seconds, to designing a scheme based on Merkle trees for winner verification and random number generation based on BLS signatures, was discarded due to extra time in understanding the language and resolving errors.
 
