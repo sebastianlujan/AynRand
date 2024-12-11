@@ -1,4 +1,3 @@
-#[allow(unused_function)]
 module aynrand::events;
 
     /// Dependencies
@@ -9,8 +8,18 @@ module aynrand::events;
         id: ID,
         index: u64
     }
-    
+
+    public struct TicketPurchased has copy, drop {
+        id: ID,
+        buyer: address,
+        timestamp: u64
+    }
+
     /// Event emiter
     public fun emit_new_tickets(id: ID, index: u64) {
         event::emit(TicketMinted {id, index});
+    }
+
+    public fun emit_buy_ticket(id: ID, buyer: address, timestamp: u64) {
+        event::emit(TicketPurchased {id, buyer, timestamp});
     }
