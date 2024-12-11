@@ -89,10 +89,4 @@ module aynrand::ticket {
         let AdminCap { id } = admin_cap;
         object::delete(id);
     }
-
-    #[test_only]
-    public fun test_destroy_ticket(ticket: Ticket) {
-        let Ticket { id, name: _, active: _, owner: _, index: _ } = ticket;
-        object::delete(id);
-    }
 }
