@@ -89,4 +89,9 @@ module aynrand::ticket {
         let AdminCap { id } = admin_cap;
         object::delete(id);
     }
+
+    #[test_only]
+    public fun test_burn_ticket(ticket: Ticket, ctx: &mut TxContext) {
+        burn(ticket, ctx)
+    }
 }

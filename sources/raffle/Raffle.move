@@ -154,50 +154,6 @@ public fun payment_refund(payment: &mut Coin<SUI>, ctx: &mut TxContext): Coin<SU
     }
 }
 
-#[test_only]
-public fun create_for_testing(ctx: &mut TxContext): Raffle {
-    Raffle {
-        id: object::new(ctx),
-        tickets: new_ticket_vault(ctx),
-        prize: new_prize_pool(),
-        config: new_raffle_config(0, 1000, tx_context::sender(ctx)),
-        state: new_raffle_state(),
-    }
-}
-
-#[test_only]
-public fun create_with_time_for_testing(
-    start_time: u64,
-    end_time: u64,
-    ctx: &mut TxContext,
-): Raffle {
-    Raffle {
-        id: object::new(ctx),
-        tickets: new_ticket_vault(ctx),
-        prize: new_prize_pool(),
-        config: new_raffle_config(start_time, end_time, tx_context::sender(ctx)),
-        state: new_raffle_state()
-    }
-}
-
-#[test_only]
-public fun test_destroy_raffle(raffle: Raffle) {
-    let Raffle {
-        id,
-        tickets,
-        prize,
-        config: _config,
-        state,
-    } = raffle;
-
-    let TicketVault { mut buyed_tickets, available_tickets: _ } = tickets;
-    table::destroy_empty(buyed_tickets);
-    object::delete(id);
-    let PrizePool { balance } = prize;
-    balance::destroy_zero(balance);
-    let RaffleState { winner: _, claimed: _ } = state;
-}
-
 // Add constructor functions
 fun new_ticket_vault(ctx: &mut TxContext): TicketVault {
     TicketVault {
@@ -226,4 +182,34 @@ fun new_raffle_state(): RaffleState {
         winner: option::none(),
         claimed: false,
     }
+}
+
+#[test_only]
+public fun create_with_time_for_testing(
+    start_time: u64,
+    end_time: u64,
+    ctx: &mut TxContext,
+): Raffle {
+    Raffle {
+        id: object::new(ctx),
+        tickets: new_ticket_vault(ctx),
+        prize: new_prize_pool(),
+        config: new_raffle_config(start_time, end_time, tx_context::sender(ctx)),
+        state: new_raffle_state(),
+    }
+}
+
+#[test_only]
+public fun test_destroy_raffle(raffle: Raffle) {
+    let Raffle { 
+        id,
+        tickets: TicketVault { buyed_tickets, available_tickets: _ },
+        prize: PrizePool { balance },
+        config: RaffleConfig { start_time: _, end_time: _, admin: _, price: _ },
+        state: RaffleState { winner: _, claimed: _ }
+    } = raffle;
+
+    table::destroy_empty(buyed_tickets);
+    object::delete(id);
+    balance::destroy_zero(balance);
 }

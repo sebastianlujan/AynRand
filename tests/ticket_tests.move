@@ -25,7 +25,7 @@ fun test_mint_ticket_flow() {
         tb::default_amount(),
         ts::ctx(&mut scenario)
     );
-    ticket::test_destroy_ticket(ticket);
+    ticket::test_burn_ticket(ticket, ts::ctx(&mut scenario));
     ticket::test_destroy_admin_cap(admin_cap);
 
     ts::end(scenario);
