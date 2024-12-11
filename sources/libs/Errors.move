@@ -43,3 +43,15 @@ module aynrand::errors;
     /// Error when attempting an invalid state transition
     const EInvalidStateTransition: u64 = 11;
     public(package) fun invalid_state_transition(): u64 { EInvalidStateTransition }
+
+    /// Error when trying to claim prize when not the winner
+    const ENotWinner: u64 = 12;
+    public(package) fun not_winner(): u64 { ENotWinner }
+
+    /// Error when prize has already been claimed
+    const EPrizeAlreadyClaimed: u64 = 13;
+    public(package) fun prize_already_claimed(): u64 { EPrizeAlreadyClaimed }
+
+    /// Error when prize pool is empty
+    const EInsufficientPrizePool: u64 = 14;
+    public(package) fun insufficient_prize_pool(): u64 { EInsufficientPrizePool }
