@@ -24,3 +24,12 @@ module aynrand::errors;
 
     const EInsufficientTickets: u64 = 7;
     public(package) fun insufficient_tickets(): u64 { EInsufficientTickets }
+
+    const ERaffleNotEnded: u64 = 8;
+    public(package) fun raffle_not_ended(): u64 { ERaffleNotEnded }
+
+    const EWinnerAlreadyDrawn: u64 = 9;
+    public(package) fun winner_already_drawn(): u64 { EWinnerAlreadyDrawn }
+
+    const ENoTicketsSold: u64 = 10;
+    public(package) fun no_tickets_sold(): u64 { ENoTicketsSold }
