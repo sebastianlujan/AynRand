@@ -21,6 +21,13 @@ module aynrand::events;
         timestamp: u64
     }
 
+    public struct PrizeClaimedByAdmin has copy, drop {
+        id: ID,
+        admin: address,
+        amount: u64,
+        timestamp: u64,
+    }
+
     /// Event emiter
     public fun emit_new_tickets(id: ID, index: u64) {
         event::emit(TicketMinted {id, index});
@@ -32,4 +39,8 @@ module aynrand::events;
 
     public fun emit_winner_drawn(id: ID, winner: address, timestamp: u64) {
         event::emit(WinnerDrawn {id, winner, timestamp});
+    }
+
+    public fun emit_prize_claimed_by_admin(id: ID, admin: address, amount: u64, timestamp: u64) {
+        event::emit(PrizeClaimedByAdmin { id, admin, amount, timestamp });
     }

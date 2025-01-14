@@ -11,7 +11,7 @@ module aynrand::prize_pool {
     /// Create a new empty prize pool
     public fun new(): PrizePool {
         PrizePool {
-            balance: balance::zero(),
+            balance: balance::zero(),           
         }
     }
 
