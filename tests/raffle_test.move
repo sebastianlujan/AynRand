@@ -1,4 +1,5 @@
 #[test_only]
+#[allow(unused_use)]
 module aynrand::raffle_test;
 
 use aynrand::base_test as tb;
@@ -9,8 +10,8 @@ use sui::test_scenario as ts;
 use sui::coin;
 use sui::sui::SUI;
 
-const START_TIME: u64 = 1000;
-const END_TIME: u64 = 2000;
+//const START_TIME: u64 = 1000;
+//const END_TIME: u64 = 2000;
 
 /*
 #[test]

@@ -1,4 +1,4 @@
-#[allow(lint(self_transfer))]
+//#[allow(lint(self_transfer))]
 module aynrand::ticket {
 
     use std::string::{ String };
@@ -31,9 +31,10 @@ module aynrand::ticket {
         assert!(types::is_one_time_witness(&otw), E::invalid_OTW());
 
         let publisher = package::claim(otw, ctx);
+        let admin_cap = AdminCap { id: object::new(ctx) };
 
         transfer::public_transfer(publisher, tx_context::sender(ctx));
-        transfer::transfer(AdminCap { id: object::new(ctx) }, tx_context::sender(ctx));
+        transfer::transfer(admin_cap, tx_context::sender(ctx));
     }
 
     public fun mint(_cap: &AdminCap, name: String, index: u64, ctx: &mut TxContext): Ticket {
@@ -51,6 +52,9 @@ module aynrand::ticket {
             owner,
             index
         };
+
+        debug::print(&ticket);
+
 
         events::emit_new_tickets(ticket_id_object, index);
         ticket
@@ -80,8 +84,16 @@ module aynrand::ticket {
     }
 
     #[test_only]
-    public fun test_new_admin_cap(ctx: &mut TxContext): AdminCap {
-        AdminCap { id: object::new(ctx) }
+    public fun test_new_admin_cap(ctx: &mut TxContext) {
+        let admin_cap = AdminCap { 
+            id: object::new(ctx) 
+        };
+        transfer::transfer(admin_cap, ctx.sender());
+    }
+
+    #[test_only]
+    public fun test_mint_ticket(admin_cap: AdminCap, ctx: &mut TxContext) {
+        mint(&admin_cap, String::utf8(b"TEST"), 0, ctx)
     }
 
     #[test_only]

@@ -1,4 +1,5 @@
 #[test_only]
+#[allow(unused_use)]
 module aynrand::base_test {
     use sui::{ address };
 
@@ -11,6 +12,8 @@ module aynrand::base_test {
     */
     
     const ADMIN_ADDRESS: address = @0xCAFE;
+    const USER_ADDRESS_1: address = @0xA1CE;
+    const USER_ADDRESS_2: address = @0xB000;
 
     /// 1 MIST represent 10^-9 Sui
     //const DEFAULT_AMOUNT: u64 = 1_000_000_000;
@@ -28,6 +31,16 @@ module aynrand::base_test {
     #[test_only]
     public fun admin(): address {
         ADMIN_ADDRESS
+    }
+
+    #[test_only]
+    public fun user(): address {
+        USER_ADDRESS_1
+    }
+
+    #[test_only]
+    public fun user_1(): address {
+        USER_ADDRESS_2
     }
 
     #[test_only]
