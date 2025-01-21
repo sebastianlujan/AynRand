@@ -5,7 +5,6 @@ module aynrand::ticket {
     use sui::{ types, package };
 
     use aynrand::{ events, errors as E};
-    use std::debug;
 
     /// OTW One Time Witness
     /// https://move-book.com/programmability/one-time-witness.html
@@ -26,7 +25,7 @@ module aynrand::ticket {
         index: u64  // Added to track ticket number
     }
 
-    // Constructor one time witness
+    // Constructor one time witness, called once on deployment
     fun init(otw: TICKET, ctx: &mut TxContext) {
         assert!(types::is_one_time_witness(&otw), E::invalid_OTW());
 
@@ -37,24 +36,20 @@ module aynrand::ticket {
         transfer::transfer(admin_cap, tx_context::sender(ctx));
     }
 
+    // Mint a new ticket, can be called by the admin cap
     public fun mint(_cap: &AdminCap, name: String, index: u64, ctx: &mut TxContext): Ticket {
         let owner = tx_context::sender(ctx);
-        
-        debug::print(&owner);
-
+    
         let ticket_id = object::new(ctx);
         let ticket_id_object = object::uid_to_inner(&ticket_id);
 
         let ticket = Ticket {
             id: ticket_id,
-            name,
-            active: false,
-            owner,
-            index
+            name: name,
+            active: true,
+            owner: owner,
+            index: index
         };
-
-        debug::print(&ticket);
-
 
         events::emit_new_tickets(ticket_id_object, index);
         ticket
@@ -71,16 +66,20 @@ module aynrand::ticket {
         transfer::public_transfer(ticket, to);
     }
 
+    public fun index(ticket: &Ticket): &u64 {
+        &ticket.index
+    }
+
     public fun name(ticket: &Ticket): &String {
         &ticket.name
     }
 
-    public fun active(ticket: &Ticket): &bool {
-        &ticket.active
-    }
-
     public fun owner(nft: &Ticket): &address {
         &nft.owner
+    }
+
+    public fun is_active(ticket: &Ticket): &bool {
+        &ticket.active
     }
 
     #[test_only]
@@ -92,14 +91,17 @@ module aynrand::ticket {
     }
 
     #[test_only]
-    public fun test_mint_ticket(admin_cap: AdminCap, ctx: &mut TxContext) {
-        mint(&admin_cap, String::utf8(b"TEST"), 0, ctx)
+    public fun test_mint_ticket(admin_cap: AdminCap, name: String, index: u64, ctx: &mut TxContext) {
+        let ticket = mint(&admin_cap, name, index, ctx);
+        transfer::transfer(admin_cap, ctx.sender());
+        transfer::transfer(ticket, ctx.sender())
+
     }
 
     #[test_only]
     public fun test_destroy_admin_cap(admin_cap: AdminCap) {
         let AdminCap { id } = admin_cap;
-        object::delete(id);
+        object::delete(id)
     }
 
     #[test_only]
