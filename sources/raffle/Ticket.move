@@ -74,10 +74,10 @@ module aynrand::ticket {
         &ticket.name
     }
 
+
     public fun owner(nft: &Ticket): &address {
         &nft.owner
     }
-
     public fun is_active(ticket: &Ticket): &bool {
         &ticket.active
     }
