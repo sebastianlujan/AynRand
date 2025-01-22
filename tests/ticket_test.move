@@ -1,29 +1,39 @@
 #[test_only]
 module aynrand::ticket_test {
-    
-    use std::debug;
-    use std::string::utf8;
+
     use sui::test_scenario::{Self, Scenario};
     use aynrand::base_test as base;
     use aynrand::ticket::{Self, AdminCap};
+    use aynrand::helper_test as fw;
+    use std::string::utf8;
 
-    use aynrand::helper_test;
+   
+    /// We use BDD Gherking like testing semantics
+    /// we choose BDD over TDD because it is cleaner and expressive
+    /// https://www.browserstack.com/guide/tdd-vs-bdd-vs-atdd
 
     #[test]
     fun it_should_mint_new_ticket() {
         
-        // Setup scenario 
+        // Setup scenario
         let admin = base::admin();
         let mut scenario = test_scenario::begin(admin);
 
-        // gherking like testing semantics
         scenario
-            .given_admin_capability(admin)
-            .when_admin_mints_tickets(admin)
-            .then_ticket_should_not_exist(admin);
+            .given_admin(admin)
+            .when_minting(admin)
+            .then_ticket_exist(admin);
 
         scenario.end();
     }
+
+    /// Extending Scenario with framework functions
+    /// https://move-book.com/reference/uses.html
+    /// https://move-book.com/move-basics/struct-methods.html?highlight=alias#aliasing-an-external-modules-method
+    
+    use fun fw::given_admin as Scenario.given_admin;
+    use fun fw::when_minting as Scenario.when_minting;
+    use fun fw::then_ticket_exist as Scenario.then_ticket_exist;
 }
 //#[allow(unused_field)]
 //fun test_buy_ticket(){}

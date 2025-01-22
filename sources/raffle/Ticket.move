@@ -36,7 +36,7 @@ module aynrand::ticket {
         transfer::transfer(admin_cap, tx_context::sender(ctx));
     }
 
-    // Mint a new ticket, can be called by the admin cap
+    // Only the owner can mint tickets via AdminCap
     public fun mint(_cap: &AdminCap, name: String, index: u64, ctx: &mut TxContext): Ticket {
         let owner = tx_context::sender(ctx);
     
@@ -48,13 +48,18 @@ module aynrand::ticket {
             name: name,
             active: true,
             owner: owner,
-            index: index
+            index: 0
         };
 
         events::emit_new_tickets(ticket_id_object, index);
         ticket
     }
 
+    public fun increment(self: &mut Ticket) {
+        self.index = self.index + 1;
+    }
+
+    // Only the owner can burn the ticket via AdminCap
     public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
         assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
 
@@ -62,24 +67,26 @@ module aynrand::ticket {
         object::delete(id);
     }
 
-    public entry fun transfer(ticket: Ticket, to: address) {
-        transfer::public_transfer(ticket, to);
+
+    public entry fun transfer(self: Ticket, to: address) {
+        transfer::public_transfer(self, to);
     }
 
-    public fun index(ticket: &Ticket): &u64 {
-        &ticket.index
+    // Accessors
+    public fun index(self: &Ticket): &u64 {
+        &self.index
     }
 
-    public fun name(ticket: &Ticket): &String {
-        &ticket.name
+    public fun name(self: &Ticket): &String {
+        &self.name
     }
 
-
-    public fun owner(nft: &Ticket): &address {
-        &nft.owner
+    public fun owner(self: &Ticket): &address {
+        &self.owner
     }
-    public fun is_active(ticket: &Ticket): &bool {
-        &ticket.active
+
+    public fun is_active(self: &Ticket): &bool {
+        &self.active
     }
 
     #[test_only]
@@ -99,13 +106,13 @@ module aynrand::ticket {
     }
 
     #[test_only]
-    public fun test_destroy_admin_cap(admin_cap: AdminCap) {
-        let AdminCap { id } = admin_cap;
+    public fun test_destroy_admin_cap(_cap: AdminCap) {
+        let AdminCap { id } = _cap;
         object::delete(id)
     }
 
     #[test_only]
-    public fun test_burn_ticket(ticket: Ticket, ctx: &mut TxContext) {
-        burn(ticket, ctx)
+    public fun test_burn_ticket(self: Ticket, ctx: &mut TxContext) {
+        burn(self, ctx);
     }
 }
