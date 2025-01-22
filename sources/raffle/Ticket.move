@@ -67,7 +67,6 @@ module aynrand::ticket {
         object::delete(id);
     }
 
-
     public entry fun transfer(self: Ticket, to: address) {
         transfer::public_transfer(self, to);
     }
