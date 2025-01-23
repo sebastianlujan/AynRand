@@ -70,8 +70,3 @@ module aynrand::ticket_test {
     use fun fw::when_minting as Scenario.when_minting;
     use fun fw::when_burning as Scenario.when_burning;
 }
-//#[allow(unused_field)]
-//fun test_buy_ticket(){}
-//#[allow(unused_field)]
-//fun test_activate_ticket(){}
-
