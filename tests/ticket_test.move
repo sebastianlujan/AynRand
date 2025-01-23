@@ -21,11 +21,31 @@ module aynrand::ticket_test {
 
         scenario
             .given_admin(admin)
-            .when_minting(admin)
-            .then_ticket_exist(admin);
-
+            .when_minting(admin);
+            
+        fw::then_ticket_exist(true, &mut scenario,admin);
         scenario.end();
     }
+
+    #[test]
+    #[expected_failure(abort_code = test_scenario::EEmptyInventory)]
+    fun it_should_mint_new_ticket_and_burn() {
+        
+        // Setup scenario
+        let admin = base::admin();
+        let mut scenario = test_scenario::begin(admin);
+
+        scenario
+            .given_admin(admin)
+            .when_minting(admin)
+            .when_burning(admin);
+            
+        fw::then_ticket_exist(false, &mut scenario,admin);
+        scenario.end();
+    }
+
+
+
 
     /// Extending Scenario with framework functions
     /// https://move-book.com/reference/uses.html
@@ -33,7 +53,7 @@ module aynrand::ticket_test {
     
     use fun fw::given_admin as Scenario.given_admin;
     use fun fw::when_minting as Scenario.when_minting;
-    use fun fw::then_ticket_exist as Scenario.then_ticket_exist;
+    use fun fw::when_burning as Scenario.when_burning;
 }
 //#[allow(unused_field)]
 //fun test_buy_ticket(){}

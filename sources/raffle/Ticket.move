@@ -25,6 +25,8 @@ module aynrand::ticket {
         index: u64  // Added to track ticket number
     }
 
+    // === Initialization ===
+
     // Constructor one time witness, called once on deployment
     fun init(otw: TICKET, ctx: &mut TxContext) {
         assert!(types::is_one_time_witness(&otw), E::invalid_OTW());
@@ -35,6 +37,8 @@ module aynrand::ticket {
         transfer::public_transfer(publisher, tx_context::sender(ctx));
         transfer::transfer(admin_cap, tx_context::sender(ctx));
     }
+
+    // === Constructors ===
 
     // Only the owner can mint tickets via AdminCap
     public fun mint(_cap: &AdminCap, name: String, index: u64, ctx: &mut TxContext): Ticket {
@@ -59,6 +63,8 @@ module aynrand::ticket {
         self.index = self.index + 1;
     }
 
+    // === Destructors === 
+    
     // Only the owner can burn the ticket via AdminCap
     public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
         assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
@@ -67,11 +73,12 @@ module aynrand::ticket {
         object::delete(id);
     }
 
-    public entry fun transfer(self: Ticket, to: address) {
-        transfer::public_transfer(self, to);
+    // Transfer ticket to raffle
+    public entry fun transfer(self: Ticket, raffle: address) {
+        transfer::transfer(self, raffle);
     }
 
-    // Accessors
+    // === Accessors ===
     public fun index(self: &Ticket): &u64 {
         &self.index
     }
@@ -88,6 +95,7 @@ module aynrand::ticket {
         &self.active
     }
 
+    // === Tests Only ===
     #[test_only]
     public fun test_new_admin_cap(ctx: &mut TxContext) {
         let admin_cap = AdminCap { 
