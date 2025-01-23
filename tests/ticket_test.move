@@ -23,7 +23,25 @@ module aynrand::ticket_test {
             .given_admin(admin)
             .when_minting(admin);
             
-        fw::then_ticket_exist(true, &mut scenario,admin);
+        fw::then_ticket_exist(true, &mut scenario, admin);
+        scenario.end();
+    }
+
+
+    #[test]
+    fun it_should_mint_multiple_tickets() {
+        
+        // Setup scenario
+        let admin = base::admin();
+        let mut scenario = test_scenario::begin(admin);
+
+        scenario
+            .given_admin(admin)
+            .when_minting(admin)
+            .when_minting(admin)
+            .when_minting(admin);
+            
+        fw::then_ticket_exist(true, &mut scenario, admin);
         scenario.end();
     }
 
@@ -40,12 +58,9 @@ module aynrand::ticket_test {
             .when_minting(admin)
             .when_burning(admin);
             
-        fw::then_ticket_exist(false, &mut scenario,admin);
+        fw::then_ticket_exist(false, &mut scenario, admin);
         scenario.end();
     }
-
-
-
 
     /// Extending Scenario with framework functions
     /// https://move-book.com/reference/uses.html

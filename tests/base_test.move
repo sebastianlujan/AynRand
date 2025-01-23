@@ -11,6 +11,7 @@ module aynrand::base_test {
     //const DEFAULT_AMOUNT: u64 = 1_000_000_000;
     const DEFAULT_AMOUNT_TICKETS: u64 = 10;
     const DEFAULT_NAME: vector<u8> = b"TEST";
+    const ZERO_COUNT: u64 = 0;
 
     public fun generate_signers(number: u64): (address, vector<address>) {
         let signers = vector::tabulate!(number, |elem| {
@@ -38,6 +39,11 @@ module aynrand::base_test {
     #[test_only]
     public fun default_amount(): u64{
         DEFAULT_AMOUNT_TICKETS
+    }
+
+    #[test_only]
+    public fun zero_count(): u64{
+        ZERO_COUNT
     }
 
     #[test_only]

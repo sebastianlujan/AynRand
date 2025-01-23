@@ -4,7 +4,7 @@ module aynrand::raffle;
  
 use aynrand::errors as E;
 use aynrand::events;
-use aynrand::ticket::{Self, Ticket, AdminCap};
+use aynrand::ticket::{Self, Ticket, AdminCap, Counter};
 use std::string::String;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
@@ -67,6 +67,7 @@ public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxC
 public entry fun mint_tickets_to_raffle(
     _cap: &AdminCap,
     raffle: &mut Raffle,
+    counter: &mut Counter,
     amount: u64,
     name: String,
     clock: &Clock,
@@ -78,9 +79,8 @@ public entry fun mint_tickets_to_raffle(
 
     let mut i = 0;
     while (i < amount) {
-        let minted_ticket = ticket::mint(_cap, name, i, ctx);
+        let minted_ticket = ticket::mint(_cap, counter, name, i, ctx);
         let ticket_id = object::id(&minted_ticket);
-        //debug::print(ticket.);
         vector::push_back(&mut raffle.tickets.available_tickets, ticket_id);
         transfer::public_transfer(minted_ticket, tx_context::sender(ctx));
         i = i + 1;

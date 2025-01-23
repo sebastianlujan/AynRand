@@ -1,4 +1,6 @@
 //#[allow(lint(self_transfer))]
+#[allow(unused_function)]
+
 module aynrand::ticket {
 
     use std::string::{ String };
@@ -22,7 +24,14 @@ module aynrand::ticket {
         name: String,
         active: bool,
         owner: address,
-        index: u64  // Added to track ticket number
+        counter: u64,
+        number: u64,  // Added to track ticket number
+    }
+
+    #[allow(unused_variable)]
+    public struct Counter has key, store {
+        id: UID,
+        last_counter: u64
     }
 
     // === Initialization ===
@@ -33,15 +42,18 @@ module aynrand::ticket {
 
         let publisher = package::claim(otw, ctx);
         let admin_cap = AdminCap { id: object::new(ctx) };
+        let admin = tx_context::sender(ctx);
+    
 
-        transfer::public_transfer(publisher, tx_context::sender(ctx));
-        transfer::transfer(admin_cap, tx_context::sender(ctx));
+        transfer::public_transfer(publisher, admin);
+        transfer::transfer(admin_cap, admin);
     }
 
     // === Constructors ===
 
     // Only the owner can mint tickets via AdminCap
-    public fun mint(_cap: &AdminCap, name: String, index: u64, ctx: &mut TxContext): Ticket {
+    #[allow(unused_variable)]
+    public fun mint(_cap: &AdminCap, counter: &mut Counter, name: String, index: u64, ctx: &mut TxContext): Ticket {
         let owner = tx_context::sender(ctx);
     
         let ticket_id = object::new(ctx);
@@ -49,18 +61,21 @@ module aynrand::ticket {
 
         let ticket = Ticket {
             id: ticket_id,
-            name: name,
+            name,
             active: true,
-            owner: owner,
-            index: 0
+            owner,
+            number: 0,
+            counter: 0,
         };
-
+    
         events::emit_new_tickets(ticket_id_object, index);
         ticket
     }
 
-    public fun increment(self: &mut Ticket) {
-        self.index = self.index + 1;
+    // internal function to increment ticket index
+    public fun increment(self: &mut Ticket, counter: &mut Counter) {
+        counter.last_counter = self.counter;
+        self.counter = self.counter + 1;
     }
 
     // === Destructors === 
@@ -69,18 +84,30 @@ module aynrand::ticket {
     public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
         assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
 
-        let Ticket { id, name: _, active: _, owner: _, index: _ } = ticket;
+        let Ticket { id, name: _, active: _, owner: _, number: _, counter: _} = ticket;
         object::delete(id);
     }
 
     // Transfer ticket to raffle
     public entry fun transfer(self: Ticket, raffle: address) {
-        transfer::transfer(self, raffle);
+        transfer::public_transfer(self, raffle);
     }
 
     // === Accessors ===
-    public fun index(self: &Ticket): &u64 {
-        &self.index
+    public fun number(self: &Ticket): &u64 {
+        &self.number
+    }
+
+    public fun counter(self: &Ticket): &u64 {
+        &self.counter
+    }
+
+    public fun last_counter(self: &Counter): &u64 {
+        &self.last_counter
+    }
+
+    fun set_counter(self: &mut Counter, last_counter: u64) {
+        self.last_counter = last_counter;
     }
 
     public fun name(self: &Ticket): &String {
@@ -105,12 +132,21 @@ module aynrand::ticket {
     }
 
     #[test_only]
-    public fun test_mint_ticket(admin_cap: AdminCap, name: String, index: u64, ctx: &mut TxContext) {
-        let ticket = mint(&admin_cap, name, index, ctx);
+    public fun test_mint_ticket(admin_cap: AdminCap, counter: &mut Counter, name: String, index: u64, ctx: &mut TxContext) {
+        let ticket = mint(&admin_cap, counter, name, index, ctx);
         transfer::transfer(admin_cap, ctx.sender());
         transfer::transfer(ticket, ctx.sender())
+    }    
 
+    #[test_only]
+    public fun test_new_counter(ctx: &mut TxContext) {
+        let counter = Counter {
+            id: object::new(ctx),
+            last_counter: 0
+        };
+        transfer::transfer(counter, ctx.sender());
     }
+    
 
     #[test_only]
     public fun test_destroy_admin_cap(_cap: AdminCap) {
