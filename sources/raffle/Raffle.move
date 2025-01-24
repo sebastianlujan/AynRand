@@ -1,19 +1,17 @@
 #[allow(lint(self_transfer))]
 
 module aynrand::raffle;
-
+ 
 use aynrand::errors as E;
 use aynrand::events;
-use aynrand::ticket::{Self, Ticket, AdminCap};
-use std::debug;
+use aynrand::ticket::{Self, Ticket, AdminCap, Counter};
 use std::string::String;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
+use sui::random::{Self, Random};
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::random::{Self, Random };
-
 
 const DEFAULT_TICKET_PRICE: u64 = 100_000_000;
 
@@ -46,7 +44,6 @@ public struct RaffleState has store {
     claimed: bool,
 }
 
-
 // Define the possible states of the raffle
 public enum RaffleLifecycle has copy, drop {
     NotStarted,
@@ -70,6 +67,7 @@ public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxC
 public entry fun mint_tickets_to_raffle(
     _cap: &AdminCap,
     raffle: &mut Raffle,
+    counter: &mut Counter,
     amount: u64,
     name: String,
     clock: &Clock,
@@ -81,9 +79,8 @@ public entry fun mint_tickets_to_raffle(
 
     let mut i = 0;
     while (i < amount) {
-        let minted_ticket = ticket::mint(_cap, name, i, ctx);
+        let minted_ticket = ticket::mint(_cap, counter, name, i, ctx);
         let ticket_id = object::id(&minted_ticket);
-        debug::print(&minted_ticket);
         vector::push_back(&mut raffle.tickets.available_tickets, ticket_id);
         transfer::public_transfer(minted_ticket, tx_context::sender(ctx));
         i = i + 1;
@@ -103,7 +100,6 @@ public entry fun buy_ticket(
 ) {
     let sender = tx_context::sender(ctx);
 
-    
     let state = get_lifecycle_state(raffle, clock);
     assert!(state == RaffleLifecycle::Active, E::invalid_state_transition());
 
@@ -112,7 +108,7 @@ public entry fun buy_ticket(
     assert!(!has_ended(raffle, clock), E::raffle_ended());
     assert!(has_price_below(coin::value(&payment)), E::insufficient_funds());
 
-     // Validate state transition
+    // Validate state transition
     validate_state_transition(raffle, clock, RaffleLifecycle::Active);
 
     // Validate ticket state
@@ -147,44 +143,38 @@ public entry fun buy_ticket(
 /// @param r: Random object for secure number generation
 /// @param ctx: Transaction context for sender info
 #[allow(lint(public_random))]
-public entry fun draw_winner(
-    raffle: &mut Raffle,
-    clock: &Clock,
-    r: &Random,
-    ctx: &mut TxContext
-) {
+public entry fun draw_winner(raffle: &mut Raffle, clock: &Clock, r: &Random, ctx: &mut TxContext) {
     // Validate state transition
     validate_state_transition(raffle, clock, RaffleLifecycle::Ended);
     assert!(option::is_none(&raffle.state.winner), E::winner_already_drawn());
-    
+
     // Get total number of tickets
     let ticket_count = table::length(&raffle.tickets.buyed_tickets);
     assert!(ticket_count > 0, E::no_tickets_sold());
-    
+
     // Generate random index using Sui's Random module
     let mut generator = random::new_generator(r, ctx);
     let random_value = random::generate_u256(&mut generator);
     let random_index = (random_value % (ticket_count as u256) as u64);
-    
+
     // Get winner address using table entries
     let mut addresses = vector::empty();
     let addr = tx_context::sender(ctx);
     if (table::contains(&raffle.tickets.buyed_tickets, addr)) {
         vector::push_back(&mut addresses, addr);
     };
-    
+
     // Set winner
     let winner = *vector::borrow(&addresses, random_index);
     assert!(table::contains(&raffle.tickets.buyed_tickets, winner), 0);
     raffle.state.winner = option::some(winner);
-    
+
     events::emit_winner_drawn(
         object::uid_to_inner(&raffle.id),
         winner,
-        clock::timestamp_ms(clock)
+        clock::timestamp_ms(clock),
     );
 }
-
 
 /// Check if the raffle has started
 /// @param raffle: Raffle object
@@ -270,12 +260,12 @@ public fun create_with_time_for_testing(
 
 #[test_only]
 public fun test_destroy_raffle(raffle: Raffle) {
-    let Raffle { 
+    let Raffle {
         id,
         tickets: TicketVault { buyed_tickets, available_tickets: _ },
         prize: PrizePool { balance },
         config: RaffleConfig { start_time: _, end_time: _, admin: _, price: _ },
-        state: RaffleState { winner: _, claimed: _ }
+        state: RaffleState { winner: _, claimed: _ },
     } = raffle;
 
     table::destroy_empty(buyed_tickets);

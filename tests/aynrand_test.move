@@ -1,7 +1,8 @@
 #[test_only]
+#[allow(unused_use)]
 module aynrand::aynrand_tests;
 // uncomment this line to import the module
-use aynrand::aynrand;
+//use aynrand::aynrand;
 
 const ENotImplemented: u64 = 0;
 
