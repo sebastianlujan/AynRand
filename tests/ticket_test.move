@@ -3,10 +3,7 @@ module aynrand::ticket_test {
 
     use sui::test_scenario::{Self, Scenario};
     use aynrand::base_test as base;
-    use aynrand::ticket::{Self, AdminCap};
     use aynrand::helper_test as fw;
-    use std::string::utf8;
-
    
     /// We use BDD Gherking like testing semantics
     /// we choose BDD over TDD because it is cleaner and expressive
@@ -23,7 +20,7 @@ module aynrand::ticket_test {
             .given_admin(admin)
             .when_minting(admin);
             
-        fw::then_ticket_exist(true, &mut scenario, admin);
+        fw::then_ticket_exist(&mut scenario, admin);
         scenario.end();
     }
 
@@ -41,7 +38,7 @@ module aynrand::ticket_test {
             .when_minting(admin)
             .when_minting(admin);
             
-        fw::then_ticket_exist(true, &mut scenario, admin);
+        fw::then_ticket_exist(&mut scenario, admin);
         scenario.end();
     }
 
@@ -58,7 +55,7 @@ module aynrand::ticket_test {
             .when_minting(admin)
             .when_burning(admin);
             
-        fw::then_ticket_exist(false, &mut scenario, admin);
+        fw::then_ticket_exist(&mut scenario, admin);
         scenario.end();
     }
 

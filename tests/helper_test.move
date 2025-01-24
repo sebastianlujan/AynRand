@@ -5,22 +5,16 @@ module aynrand::helper_test {
 
     use std::debug;
     use std::string::utf8;
-    use sui::transfer;
-    use std::option::{Self, Option};
     use sui::test_scenario::{Self, Scenario};
     use aynrand::base_test as base;
     use aynrand::ticket::{Self, AdminCap, Ticket, Counter};
     use aynrand::ticket_test;
 
     // === Local Code errors ===
-    const TICKET_EXISTANCE_MISMATCH: u64 = 0;
     const TICKET_NAME_MISMATCH: u64 = 1;
     const TICKET_OWNER_MISMATCH: u64 = 2;
     const TICKET_ACTIVE_MISMATCH: u64 = 3;    
     const TICKET_NUMBER_MISMATCH: u64 = 4;
-
-    const MOCK_RAFFLE_CONTRACT: address = @0x0;
-
 
       #[test_only]
     public fun given_admin(scenario: &mut Scenario, admin: address): &mut Scenario {
@@ -76,12 +70,10 @@ module aynrand::helper_test {
 
 
     #[test_only]
-    public fun then_ticket_exist(should_exist: bool, scenario: &mut Scenario, admin: address): &mut Scenario {
+    public fun then_ticket_exist(scenario: &mut Scenario, admin: address): &mut Scenario {
         scenario.next_tx(admin);
         {
-            // Verify ticket exists in owner's inventory
             let ticket = scenario.take_from_sender<Ticket>();
-            //assert!(!scenario.has_most_recent_for_sender<Ticket>(), TICKET_EXISTANCE_MISMATCH);
             test_scenario::return_to_sender(scenario, ticket);
         };
         scenario
