@@ -16,6 +16,12 @@ module aynrand::helper_test {
     const TICKET_ACTIVE_MISMATCH: u64 = 3;    
     const TICKET_NUMBER_MISMATCH: u64 = 4;
 
+     public fun setup_test(): (address, Scenario) {
+        let admin = base::admin();
+        let scenario = test_scenario::begin(admin);
+        (admin, scenario)
+    }
+
     #[test_only]
     public fun given_admin(scenario: &mut Scenario, admin: address): &mut Scenario {
         scenario.next_tx(admin);

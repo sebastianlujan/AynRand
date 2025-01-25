@@ -14,8 +14,10 @@ use sui::sui::SUI;
 const START_TIME: u64 = 1000;
 const END_TIME: u64 = 2000;
 
+// === Unit Tests ===
+
 #[test]
-fun it_should_create_a_new_raffle_() { 
+fun it_should_create_a_new_raffle_() {
 
 }
 
