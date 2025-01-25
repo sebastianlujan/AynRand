@@ -3,7 +3,7 @@
 
 module aynrand::ticket {
 
-    use std::string::{ String };
+    use std::string::{ String, utf8 };
     use sui::{ types, package };
 
     use aynrand::{ events, errors as E};
@@ -22,10 +22,10 @@ module aynrand::ticket {
     public struct Ticket has key, store {
         id: UID,
         name: String,
-        active: bool,
-        owner: address,
+        committed_hash: String,  // Added to track ticket number
         counter: u64,
-        number: u64,  // Added to track ticket number
+        owner: address,
+        active: bool,
     }
 
     #[allow(unused_variable)]
@@ -62,10 +62,10 @@ module aynrand::ticket {
         let ticket = Ticket {
             id: ticket_id,
             name,
-            active: true,
+            committed_hash: utf8(b""),
+            counter:  0,
             owner,
-            number: 0,
-            counter: 0,
+            active: true,
         };
     
         events::emit_new_tickets(ticket_id_object, index);
@@ -84,7 +84,7 @@ module aynrand::ticket {
     public entry fun burn(ticket: Ticket, ctx: &mut TxContext) {
         assert!(ticket.owner == tx_context::sender(ctx), E::invalid_owner());
 
-        let Ticket { id, name: _, active: _, owner: _, number: _, counter: _} = ticket;
+        let Ticket { id, name: _, committed_hash: _, counter: _, owner: _, active: _} = ticket;
         object::delete(id);
     }
 
@@ -94,8 +94,8 @@ module aynrand::ticket {
     }
 
     // === Accessors ===
-    public fun number(self: &Ticket): &u64 {
-        &self.number
+    public fun committed_hash(self: &Ticket): &String {
+        &self.committed_hash
     }
 
     public fun counter(self: &Ticket): &u64 {
@@ -106,9 +106,6 @@ module aynrand::ticket {
         &self.last_counter
     }
 
-    fun set_counter(self: &mut Counter, last_counter: u64) {
-        self.last_counter = last_counter;
-    }
 
     public fun name(self: &Ticket): &String {
         &self.name
@@ -118,6 +115,15 @@ module aynrand::ticket {
         &self.owner
     }
 
+    fun set_counter(self: &mut Counter, last_counter: u64) {
+        self.last_counter = last_counter;
+    }
+
+    public fun set_committed(self: &mut Ticket, number: String) {
+        self.committed_hash = number;
+    }
+
+    // === Predicates ===
     public fun is_active(self: &Ticket): &bool {
         &self.active
     }
@@ -147,7 +153,6 @@ module aynrand::ticket {
         transfer::transfer(counter, ctx.sender());
     }
     
-
     #[test_only]
     public fun test_destroy_admin_cap(_cap: AdminCap) {
         let AdminCap { id } = _cap;

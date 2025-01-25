@@ -9,9 +9,12 @@ use std::string::String;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
+use sui::dynamic_object_field;
 use sui::random::{Self, Random};
 use sui::sui::SUI;
 use sui::table::{Self, Table};
+use std::hash::{sha3_256};
+use std::bcs::{to_bytes};
 
 const DEFAULT_TICKET_PRICE: u64 = 100_000_000;
 
@@ -52,6 +55,8 @@ public enum RaffleLifecycle has copy, drop {
     WinnerDrawn,
 }
 
+// === Constructors === 
+
 /// Create a new raffle
 public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxContext): Raffle {
     Raffle {
@@ -67,9 +72,9 @@ public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxC
 public entry fun mint_tickets_to_raffle(
     _cap: &AdminCap,
     raffle: &mut Raffle,
-    counter: &mut Counter,
     amount: u64,
     name: String,
+    counter: &mut Counter,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -78,6 +83,7 @@ public entry fun mint_tickets_to_raffle(
     assert!(state == RaffleLifecycle::NotStarted, E::invalid_state_transition());
 
     let mut i = 0;
+    
     while (i < amount) {
         let minted_ticket = ticket::mint(_cap, counter, name, i, ctx);
         let ticket_id = object::id(&minted_ticket);
@@ -87,6 +93,8 @@ public entry fun mint_tickets_to_raffle(
     };
 }
 
+/// === Business Logic === 
+
 /// Buy a ticket for a raffle
 /// @param raffle_id: ID of the raffle to buy a ticket for
 /// @param payment: Payment object containing SUI tokens
@@ -95,6 +103,7 @@ public entry fun mint_tickets_to_raffle(
 public entry fun buy_ticket(
     raffle: &mut Raffle,
     mut payment: Coin<SUI>,
+    ticket_to_commit: String,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -104,23 +113,24 @@ public entry fun buy_ticket(
     assert!(state == RaffleLifecycle::Active, E::invalid_state_transition());
 
     // Validate raffle state
-    assert!(!has_started(raffle, clock), E::raffle_started());
-    assert!(!has_ended(raffle, clock), E::raffle_ended());
-    assert!(has_price_below(coin::value(&payment)), E::insufficient_funds());
+    validate_raffle_state(raffle, clock, &payment);
 
     // Validate state transition
     validate_state_transition(raffle, clock, RaffleLifecycle::Active);
 
     // Validate ticket state
-    assert!(!table::contains(&raffle.tickets.buyed_tickets, sender), E::duplicate_ticket());
+    assert!(!table::contains(&raffle.tickets.buyed_tickets, sender), E::duplicated_ticket());
     assert!(!vector::is_empty(&raffle.tickets.available_tickets), E::insufficient_tickets());
+    
+    // Get and prepare ticket
+    let ticket_id = vector::pop_back(&mut raffle.tickets.available_tickets);
+    let mut ticket = dynamic_object_field::remove(&mut raffle.id, ticket_id);
+    
+    commit_ticket(ticket_to_commit, &mut ticket);
+    table::add(&mut raffle.tickets.buyed_tickets, sender, ticket);
 
     // Process payment
-    let payment_value = coin::value(&payment);
-    if (payment_value > raffle.config.price) {
-        let refund = coin::split(&mut payment, payment_value - raffle.config.price, ctx);
-        transfer::public_transfer(refund, sender);
-    };
+    process_payment(raffle, &mut payment, ctx);
 
     // handle prize pool
     balance::join(&mut raffle.prize.balance, coin::into_balance(payment));
@@ -130,6 +140,22 @@ public entry fun buy_ticket(
         sender,
         clock::timestamp_ms(clock),
     );
+}
+
+fun process_payment(raffle: &Raffle, payment: &mut Coin<SUI>, ctx: &mut TxContext) {
+    let payment_value = coin::value(payment);
+    if (payment_value > raffle.config.price) {
+
+        let split_amount = payment_value - raffle.config.price;
+
+        let refund = coin::split(payment, split_amount, ctx);
+        transfer::public_transfer(refund, tx_context::sender(ctx));
+    };
+}
+
+fun commit_ticket(ticket_to_commit: String, ticket: &mut Ticket) {
+    assert!(is_unique_ticket_number(ticket, ticket_to_commit), E::duplicated_ticket());
+    ticket::set_committed(ticket, ticket_to_commit);
 }
 
 /// WARNING: Current random number generation is not secure enough for production use.
@@ -197,6 +223,19 @@ public fun has_ended(raffle: &Raffle, time: &Clock): bool {
 /// @return: True if the payment is sufficient false otherwise
 public fun has_price_below(payment: u64): bool {
     payment >= DEFAULT_TICKET_PRICE
+}
+
+/// Checks if the given ticket number is unique (not previously chosen)
+/// @param ticket: Reference to the ticket being checked
+/// @param candidate: the candidate being compared
+/// @return: True if the candidate is unique (not used), false if already taken
+public fun is_unique_ticket_number(ticket: &Ticket, candidate: String): bool {
+
+    let ticket_number_bytes = to_bytes(ticket::committed_hash(ticket));
+    let ticket_number = sha3_256(ticket_number_bytes);
+    let hashed_candidate = sha3_256(to_bytes(&candidate));
+    
+    (ticket_number != hashed_candidate)
 }
 
 /// Process the payment and get the refund if the payment is greater than the ticket price
@@ -276,7 +315,7 @@ public fun test_destroy_raffle(raffle: Raffle) {
 /// Get current state of the raffle
 public fun get_lifecycle_state(raffle: &Raffle, clock: &Clock): RaffleLifecycle {
     if (option::is_some(&raffle.state.winner)) {
-        RaffleLifecycle::WinnerDrawn
+        return RaffleLifecycle::WinnerDrawn
     } else if (has_ended(raffle, clock)) {
         RaffleLifecycle::Ended
     } else if (has_started(raffle, clock)) {
@@ -290,4 +329,10 @@ public fun get_lifecycle_state(raffle: &Raffle, clock: &Clock): RaffleLifecycle 
 fun validate_state_transition(raffle: &Raffle, clock: &Clock, expected: RaffleLifecycle) {
     let current_state = get_lifecycle_state(raffle, clock);
     assert!(current_state == expected, E::invalid_state_transition());
+}
+
+fun validate_raffle_state(raffle: &Raffle, clock: &Clock, payment: &Coin<SUI>) {
+    assert!(!has_started(raffle, clock), E::raffle_started());
+    assert!(!has_ended(raffle, clock), E::raffle_ended());
+    assert!(has_price_below(coin::value(payment)), E::insufficient_funds());
 }

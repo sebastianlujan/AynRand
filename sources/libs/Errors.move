@@ -20,7 +20,7 @@ module aynrand::errors;
     public(package) fun raffle_ended(): u64 { ERaffleHasEnded }
     
     const EDuplicateTicket: u64 = 6;
-    public(package) fun duplicate_ticket(): u64 { EDuplicateTicket }
+    public(package) fun duplicated_ticket(): u64 { EDuplicateTicket }
 
     const EInsufficientTickets: u64 = 7;
     public(package) fun insufficient_tickets(): u64 { EInsufficientTickets }
@@ -63,3 +63,6 @@ module aynrand::errors;
     /// Error when selected winner is not a valid ticket holder
     const EInvalidWinner: u64 = 16;
     public(package) fun invalid_winner(): u64 { EInvalidWinner }
+
+    const ETicketNotExist: u64 = 17;
+    public(package) fun ticket_not_exist(): u64 { ETicketNotExist }
