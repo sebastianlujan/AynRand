@@ -2,6 +2,7 @@
 module aynrand::ticket_test {
 
     use sui::test_scenario::{Self, Scenario};
+    use sui::clock;
     use aynrand::base_test as base;
     use aynrand::helper_test as fw;
 
@@ -21,6 +22,7 @@ module aynrand::ticket_test {
             .when_minting(admin);
             
         fw::then_ticket_exist(&mut scenario, admin);
+        
         scenario.end();
     }
 
@@ -38,6 +40,7 @@ module aynrand::ticket_test {
             .when_minting(admin);
             
         fw::then_ticket_exist(&mut scenario, admin);
+
         scenario.end();
     }
 
@@ -54,6 +57,7 @@ module aynrand::ticket_test {
             .when_burning(admin);
             
         fw::then_ticket_exist(&mut scenario, admin);
+        
         scenario.end();
     }
 

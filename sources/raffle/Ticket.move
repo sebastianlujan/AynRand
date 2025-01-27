@@ -159,6 +159,13 @@ module aynrand::ticket {
         object::delete(id)
     }
 
+     #[test_only]
+    public fun test_destroy_counter(counter: Counter) {
+        let Counter { id, last_counter: _last_counter } = counter;
+        object::delete(id);
+    }
+    
+
     #[test_only]
     public fun test_burn_ticket(self: Ticket, ctx: &mut TxContext) {
         burn(self, ctx);
