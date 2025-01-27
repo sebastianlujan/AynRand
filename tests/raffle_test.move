@@ -1,19 +1,18 @@
 #[test_only]
-#[allow(unused_use)]
-module aynrand::raffle_test;
+public fun when_drawing_winner(scenario: &mut Scenario, admin: address): &mut Scenario {
+    test_scenario::next_tx(scenario, admin);
+    {
+        let raffle = test_scenario::take_shared<Raffle>(scenario);
+        let clock = test_scenario::take_shared<Clock>(scenario);
+        
+        raffle::draw_winner(&mut raffle, &clock, test_scenario::ctx(scenario));
+        
+        test_scenario::return_shared(clock);
+        test_scenario::return_shared(raffle);
+    };
+    scenario
+}
 
-use sui::test_scenario::{Self, Scenario};
-use aynrand::base_test as base;
-use aynrand::helper_test as fw;
-use aynrand::raffle;
-use aynrand::ticket;
-use sui::clock;
-
-const START_TIME: u64 = 1000;
-const END_TIME: u64 = 2000;
-
-// == End to End Test ==
-#[test]
 fun it_should_complete_raffle_e2e() {
     let (admin, mut scenario) = fw::setup_test();
     let (ayn, guys) = base::generate_signers(base::default_amount());
@@ -31,7 +30,7 @@ fun it_should_complete_raffle_e2e() {
 
         // When
         .when_funding_buyers(guys, base::default_price())
-        .when_buyers_buy_tickets(guys, base::default_amount(), commitments);
+        .when_buyers_buy_tickets(guys, base::default_amount(), commitments)
 
         // Then
 
