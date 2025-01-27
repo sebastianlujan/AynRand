@@ -312,6 +312,12 @@ public fun test_destroy_raffle(raffle: Raffle) {
     balance::destroy_zero(balance);
 }
 
+
+#[test_only]
+public fun test_share_raffle(raffle: Raffle) {
+    transfer::share_object(raffle)
+}
+
 /// Get current state of the raffle
 public fun get_lifecycle_state(raffle: &Raffle, clock: &Clock): RaffleLifecycle {
     if (option::is_some(&raffle.state.winner)) {

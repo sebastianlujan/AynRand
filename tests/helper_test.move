@@ -50,6 +50,19 @@ module aynrand::helper_test {
         scenario
     }
 
+    #[test_only]
+    public fun given_raffle(scenario: &mut Scenario, start_time: u64, end_time: u64, admin: address): &mut Scenario {
+        scenario.next_tx(admin);
+        {             
+            let admin_cap = scenario.take_from_sender<AdminCap>();
+            let raffle = raffle::create(&admin_cap, start_time, end_time, scenario.ctx());
+            scenario.return_to_sender(admin_cap);
+            raffle::test_share_raffle(raffle);
+        };
+        scenario
+    }
+
+
     // === When functions ===
     #[test_only]
     public fun when_minting(scenario: &mut Scenario, admin: address): &mut Scenario {
@@ -88,17 +101,6 @@ module aynrand::helper_test {
         {
             let ticket = scenario.take_from_sender<Ticket>();
             ticket::burn(ticket, scenario.ctx());
-        };
-        scenario
-    }
-
-    #[test_only]
-    public fun when_creating_raffle(scenario: &mut Scenario, start_time: u64, end_time: u64, admin: address): &mut Scenario {
-        scenario.next_tx(admin);
-        {             
-            let admin_cap = scenario.take_from_sender<AdminCap>();
-            //let raffle = raffle::create(&admin_cap, start_time, end_time, scenario.ctx());
-            scenario.return_to_sender(admin_cap);        
         };
         scenario
     }
