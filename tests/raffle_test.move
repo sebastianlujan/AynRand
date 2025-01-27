@@ -11,28 +11,29 @@ use sui::clock;
 
 const START_TIME: u64 = 1000;
 const END_TIME: u64 = 2000;
-const TICKET_AMOUNT: u64 = 100;
 
 // == End to End Test ==
 #[test]
 fun it_should_complete_raffle_e2e() {
     let (admin, mut scenario) = fw::setup_test();
-    let (ayn, guys) = base::generate_signers(TICKET_AMOUNT);
+    let (ayn, guys) = base::generate_signers(base::default_amount());
+    
+    let commitments = base::generate_ten_commitments();
 
     scenario
 
-        // Given setup preconditions
+        // Given
         .given_admin(admin)
         .given_clock( START_TIME - 1)
         .given_raffle(START_TIME, END_TIME, admin)
-    
-        .given_minted_tickets(admin, TICKET_AMOUNT)
 
-        // When actions
-        .when_funding_buyers(guys, TICKET_AMOUNT);
+        .given_minted_tickets(admin, base::default_amount())
 
+        // When
+        .when_funding_buyers(guys, base::default_price())
+        .when_buyers_buy_tickets(guys, base::default_amount(), commitments);
 
-        // Then verifications
+        // Then
 
     // Start Raffle
 
@@ -66,5 +67,6 @@ use fun fw::given_minted_tickets as Scenario.given_minted_tickets;
 use fun fw::when_minting as Scenario.when_minting;
 use fun fw::when_burning as Scenario.when_burning;
 use fun fw::when_funding_buyers as Scenario.when_funding_buyers;
+use fun fw::when_buyers_buy_tickets as Scenario.when_buyers_buy_tickets;
 
 

@@ -88,7 +88,10 @@ public entry fun mint_tickets_to_raffle(
         let minted_ticket = ticket::mint(_cap, counter, name, i, ctx);
         let ticket_id = object::id(&minted_ticket);
         vector::push_back(&mut raffle.tickets.available_tickets, ticket_id);
-        transfer::public_transfer(minted_ticket, tx_context::sender(ctx));
+        //transfer::public_transfer(minted_ticket, tx_context::sender(ctx));
+        
+        dynamic_object_field::add(&mut raffle.id, ticket_id, minted_ticket);
+
         i = i + 1;
     };
 }
@@ -338,7 +341,7 @@ fun validate_state_transition(raffle: &Raffle, clock: &Clock, expected: RaffleLi
 }
 
 fun validate_raffle_state(raffle: &Raffle, clock: &Clock, payment: &Coin<SUI>) {
-    assert!(!has_started(raffle, clock), E::raffle_started());
+    //assert!(!has_started(raffle, clock), E::raffle_started());
     assert!(!has_ended(raffle, clock), E::raffle_ended());
     assert!(has_price_below(coin::value(payment)), E::insufficient_funds());
 }

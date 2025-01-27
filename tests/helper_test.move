@@ -13,11 +13,12 @@ module aynrand::helper_test {
     use aynrand::ticket_test;
 
     use sui::clock::{Self, Clock};
-    use sui::coin;
+    use sui::coin::{Self, Coin};
     use sui::sui::SUI;
 
 
     // === Local Code errors ===
+    const START_TIME: u64 = 1000;
     const TICKET_NAME_MISMATCH: u64 = 1;
     const TICKET_OWNER_MISMATCH: u64 = 2;
     const TICKET_ACTIVE_MISMATCH: u64 = 3;    
@@ -157,6 +158,34 @@ module aynrand::helper_test {
         };
         scenario
     }
+
+    #[test_only]
+    public fun when_buyers_buy_tickets(scenario: &mut Scenario, buyers: vector<address>, amount: u64, to_commit: vector<vector<u8>>): &mut Scenario {
+    let mut i = 0;
+    while (i < amount) {
+        let buyer = *vector::borrow(&buyers, i);
+        test_scenario::next_tx(scenario, buyer);
+        {
+            let ticket_commit =  *vector::borrow(&to_commit, i);
+
+            let mut raffle = test_scenario::take_shared<Raffle>(scenario);
+            let payment = test_scenario::take_from_sender<Coin<SUI>>(scenario);
+            let mut clock = test_scenario::take_shared<Clock>(scenario);
+            
+            // Increment clock
+            // clock::increment_for_testing(&mut clock, START_TIME + 1);
+            
+            raffle::buy_ticket(&mut raffle, payment, utf8(ticket_commit), &clock, test_scenario::ctx(scenario));
+
+            test_scenario::return_shared(clock);
+            test_scenario::return_shared(raffle);
+
+        };
+        i = i + 1;
+    };
+    scenario
+}
+
 
     // === Then functions ===
     #[test_only]
