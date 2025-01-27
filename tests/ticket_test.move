@@ -2,8 +2,10 @@
 module aynrand::ticket_test {
 
     use sui::test_scenario::{Self, Scenario};
+    use sui::clock;
     use aynrand::base_test as base;
     use aynrand::helper_test as fw;
+
    
     /// We use BDD Gherking like testing semantics
     /// we choose BDD over TDD because it is cleaner and expressive
@@ -13,14 +15,14 @@ module aynrand::ticket_test {
     fun it_should_mint_new_ticket() {
         
         // Setup scenario
-        let admin = base::admin();
-        let mut scenario = test_scenario::begin(admin);
+        let(admin, mut scenario) = fw::setup_test();
 
         scenario
             .given_admin(admin)
             .when_minting(admin);
             
         fw::then_ticket_exist(&mut scenario, admin);
+        
         scenario.end();
     }
 
@@ -29,9 +31,8 @@ module aynrand::ticket_test {
     fun it_should_mint_multiple_tickets() {
         
         // Setup scenario
-        let admin = base::admin();
-        let mut scenario = test_scenario::begin(admin);
-
+        let(admin, mut scenario) = fw::setup_test();
+        
         scenario
             .given_admin(admin)
             .when_minting(admin)
@@ -39,6 +40,7 @@ module aynrand::ticket_test {
             .when_minting(admin);
             
         fw::then_ticket_exist(&mut scenario, admin);
+
         scenario.end();
     }
 
@@ -47,8 +49,7 @@ module aynrand::ticket_test {
     fun it_should_mint_new_ticket_and_burn() {
         
         // Setup scenario
-        let admin = base::admin();
-        let mut scenario = test_scenario::begin(admin);
+        let(admin, mut scenario) = fw::setup_test();
 
         scenario
             .given_admin(admin)
@@ -56,6 +57,7 @@ module aynrand::ticket_test {
             .when_burning(admin);
             
         fw::then_ticket_exist(&mut scenario, admin);
+        
         scenario.end();
     }
 
