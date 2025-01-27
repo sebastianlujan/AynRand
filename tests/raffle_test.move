@@ -17,23 +17,28 @@ const TICKET_AMOUNT: u64 = 100;
 #[test]
 fun it_should_complete_raffle_e2e() {
     let (admin, mut scenario) = fw::setup_test();
-    
-    // Create Raffle
+    let (ayn, guys) = base::generate_signers(TICKET_AMOUNT);
+
     scenario
+
+        // Given setup preconditions
         .given_admin(admin)
         .given_clock( START_TIME - 1)
         .given_raffle(START_TIME, END_TIME, admin)
+    
+        .given_minted_tickets(admin, TICKET_AMOUNT)
+
+        // When actions
+        .when_funding_buyers(guys, TICKET_AMOUNT);
+
+
+        // Then verifications
+
+    // Start Raffle
+
+
         
 
-        // Mint Tickets to Raffle
-        .given_minted_tickets(admin, TICKET_AMOUNT);
-
-
-        // Simulate ticket purchase
-
-        // Advance Time and Draw Winner
-
-    // Verify Winner
     scenario.end();
 }
 
@@ -60,5 +65,6 @@ use fun fw::given_minted_tickets as Scenario.given_minted_tickets;
 // === When functions ===
 use fun fw::when_minting as Scenario.when_minting;
 use fun fw::when_burning as Scenario.when_burning;
+use fun fw::when_funding_buyers as Scenario.when_funding_buyers;
 
 

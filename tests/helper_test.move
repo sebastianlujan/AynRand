@@ -13,6 +13,8 @@ module aynrand::helper_test {
     use aynrand::ticket_test;
 
     use sui::clock::{Self, Clock};
+    use sui::coin;
+    use sui::sui::SUI;
 
 
     // === Local Code errors ===
@@ -133,6 +135,25 @@ module aynrand::helper_test {
         {
             let ticket = scenario.take_from_sender<Ticket>();
             ticket::burn(ticket, scenario.ctx());
+        };
+        scenario
+    }
+
+    #[test_only]
+    public fun when_funding_buyers(scenario: &mut Scenario, buyers: vector<address>, amount: u64): &mut Scenario {
+        let mut i = 0;
+        let buyers_length = vector::length(&buyers);
+        
+        while (i < buyers_length) {
+            let buyer = *vector::borrow(&buyers, i);
+            
+            scenario.next_tx(buyer);
+            {
+                let _coin = coin::mint_for_testing<SUI>(amount, scenario.ctx());
+                transfer::public_transfer(_coin, buyer);
+            };        
+
+            i = i + 1;
         };
         scenario
     }
