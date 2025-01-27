@@ -62,6 +62,38 @@ module aynrand::helper_test {
         scenario
     }
 
+    #[test_only]
+    public fun given_minted_tickets(scenario: &mut Scenario, admin: address, amount: u64): &mut Scenario {
+        scenario.next_tx(admin);
+        {
+            let admin_cap = scenario.take_from_sender<AdminCap>();
+            let mut clock = test_scenario::take_shared<Clock>(scenario);
+
+            let mut counter = test_scenario::take_from_sender<Counter>(scenario);
+            let mut raffle = scenario.take_shared<Raffle>();
+            let name = utf8(b"AYN");
+
+            raffle::mint_tickets_to_raffle(
+                &admin_cap, 
+                &mut raffle, 
+                amount,
+                name,
+                &mut counter,
+                &clock,
+                scenario.ctx()
+            );
+
+            clock::increment_for_testing(&mut clock, 1);
+
+            scenario.return_to_sender(admin_cap);
+            scenario.return_to_sender(counter);
+            test_scenario::return_shared(clock);
+
+            test_scenario::return_shared(raffle);
+        };
+        scenario
+    }
+
 
     // === When functions ===
     #[test_only]

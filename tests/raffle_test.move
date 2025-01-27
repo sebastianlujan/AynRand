@@ -21,23 +21,20 @@ fun it_should_complete_raffle_e2e() {
     // Create Raffle
     scenario
         .given_admin(admin)
-        .given_clock( START_TIME)
-        .given_raffle(START_TIME, END_TIME, admin);
+        .given_clock( START_TIME - 1)
+        .given_raffle(START_TIME, END_TIME, admin)
         
-    // Mint Tickets to Raffle
 
-    // Simulate ticket purchase
+        // Mint Tickets to Raffle
+        .given_minted_tickets(admin, TICKET_AMOUNT);
 
-    // Advance Time and Draw Winner
+
+        // Simulate ticket purchase
+
+        // Advance Time and Draw Winner
 
     // Verify Winner
     scenario.end();
-
-
-    // Generate 10 signers
-    let (_, buyers) = base::generate_signers(10);
-
-
 }
 
 // === Unit Tests ===
@@ -47,7 +44,7 @@ fun it_should_create_a_new_raffle_() {
     
     scenario
         .given_admin(admin)
-        .when_creating_raffle(START_TIME, END_TIME, admin);
+        .given_raffle(START_TIME, END_TIME, admin);
 
     scenario.end();
 }
@@ -58,9 +55,10 @@ fun it_should_create_a_new_raffle_() {
 use fun fw::given_admin as Scenario.given_admin;
 use fun fw::given_clock as Scenario.given_clock;
 use fun fw::given_raffle as Scenario.given_raffle;
+use fun fw::given_minted_tickets as Scenario.given_minted_tickets;
 
 // === When functions ===
 use fun fw::when_minting as Scenario.when_minting;
 use fun fw::when_burning as Scenario.when_burning;
-}
+
 
