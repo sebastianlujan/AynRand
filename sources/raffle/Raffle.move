@@ -349,3 +349,19 @@ fun validate_raffle_state(raffle: &Raffle, clock: &Clock, payment: &Coin<SUI>) {
     assert!(!has_ended(raffle, clock), E::raffle_ended());
     assert!(has_price_below(coin::value(payment)), E::insufficient_funds());
 }
+
+public fun has_winner(raffle: &Raffle): bool {
+    option::is_some(&raffle.state.winner)
+}
+
+public fun is_prize_claimed(raffle: &Raffle): bool {
+    raffle.state.claimed
+}
+
+public fun get_winner(raffle: &Raffle): address {
+    *option::borrow(&raffle.state.winner)
+}
+
+public fun has_ticket(raffle: &Raffle, owner: address): bool {
+    table::contains(&raffle.tickets.buyed_tickets, owner)
+}

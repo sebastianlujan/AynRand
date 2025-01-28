@@ -16,7 +16,7 @@ module aynrand::helper_test {
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::random::{Self, Random};
-
+    use sui::table;
 
     // === Local Code errors ===
     const START_TIME: u64 = 1000;
@@ -24,6 +24,7 @@ module aynrand::helper_test {
     const TICKET_OWNER_MISMATCH: u64 = 2;
     const TICKET_ACTIVE_MISMATCH: u64 = 3;    
     const TICKET_NUMBER_MISMATCH: u64 = 4;
+    const TICKET_NOT_FOUND: u64 = 5;
 
     #[test_only]
     public fun setup_test(): (address, Scenario) {
@@ -97,7 +98,6 @@ module aynrand::helper_test {
         };
         scenario
     }
-
 
     // === When functions ===
     #[test_only]
@@ -182,7 +182,7 @@ module aynrand::helper_test {
                 test_scenario::return_shared(clock);
                 test_scenario::return_shared(raffle);
             };
-            
+
             i = i + 1;
         };
         scenario
@@ -200,19 +200,26 @@ module aynrand::helper_test {
     }
 
     #[test_only]
-    public fun when_drawing_winner(scenario: &mut Scenario, admin: address): &mut Scenario {
-        test_scenario::next_tx(scenario, admin);
+    public fun when_drawing_winner(scenario: &mut Scenario, user: address): &mut Scenario {
+        
+        // First transaction: System creates/shared the Random
+        test_scenario::next_tx(scenario, @0x0); // <-- SYSTEM ADDRESS
+        {
+            let ctx = test_scenario::ctx(scenario);
+            random::create_for_testing(ctx);
+        };
+
+        // Second transaction: user draws winner
+        test_scenario::next_tx(scenario, user);
         {
             let mut raffle = test_scenario::take_shared<Raffle>(scenario);
             let clock = test_scenario::take_shared<Clock>(scenario);
-            
-
-            // Create and use random object
             random::create_for_testing(scenario.ctx());
 
+            // Create and use random object
             let luck = test_scenario::take_shared<Random>(scenario);
             raffle::draw_winner(&mut raffle, &clock, &luck, test_scenario::ctx(scenario));
-            
+
             test_scenario::return_shared(clock);
             test_scenario::return_shared(raffle);
             test_scenario::return_shared(luck);
@@ -232,6 +239,31 @@ module aynrand::helper_test {
     }
 
     #[test_only]
+    public fun then_winner_selected(scenario: &mut Scenario, admin: address): &mut Scenario {
+        scenario.next_tx(admin);
+        {
+            let raffle = test_scenario::take_shared<Raffle>(scenario);
+            let winner = raffle::get_winner(&raffle);
+            std::debug::print(&winner);
+
+            assert!(raffle::has_winner(&raffle), 0);
+            test_scenario::return_shared(raffle);
+        };
+        scenario
+    }
+
+    #[test_only]
+    public fun then_prize_claimed(scenario: &mut Scenario): &mut Scenario {
+        test_scenario::next_tx(scenario, base::admin());
+        {
+            let raffle = test_scenario::take_shared<Raffle>(scenario); 
+            assert!(raffle::is_prize_claimed(&raffle), 0);
+            test_scenario::return_shared(raffle);
+        };
+        scenario
+    }
+    
+    #[test_only]
     public fun clean(scenario: &mut Scenario) {
 
         assert!(test_scenario::has_most_recent_shared<Clock>(), 0);
@@ -242,7 +274,6 @@ module aynrand::helper_test {
         assert!(test_scenario::has_most_recent_for_sender<AdminCap>(scenario), 0);
         let admin_cap = test_scenario::take_from_sender<AdminCap>(scenario);
         ticket::test_destroy_admin_cap(admin_cap);
-
 
         // Clean up Counter if exists
         assert!(test_scenario::has_most_recent_for_sender<Counter>(scenario), 0);
