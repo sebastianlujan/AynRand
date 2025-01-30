@@ -15,6 +15,7 @@ module aynrand::helper_test {
     use sui::clock::{Self, Clock};
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
+    use sui::random::{Self, Random};
 
 
     // === Local Code errors ===
@@ -161,31 +162,63 @@ module aynrand::helper_test {
 
     #[test_only]
     public fun when_buyers_buy_tickets(scenario: &mut Scenario, buyers: vector<address>, amount: u64, to_commit: vector<vector<u8>>): &mut Scenario {
-    let mut i = 0;
-    while (i < amount) {
-        let buyer = *vector::borrow(&buyers, i);
-        test_scenario::next_tx(scenario, buyer);
+        let mut i = 0;
+        while (i < amount) {
+
+            let buyer = *vector::borrow(&buyers, i);
+            test_scenario::next_tx(scenario, buyer);
+            {
+                let ticket_commit =  *vector::borrow(&to_commit, i);
+
+                let mut raffle = test_scenario::take_shared<Raffle>(scenario);
+                let payment = test_scenario::take_from_sender<Coin<SUI>>(scenario);
+                let clock = test_scenario::take_shared<Clock>(scenario);
+                
+                // Increment clock
+                // clock::increment_for_testing(&mut clock, START_TIME + 1);
+                
+                raffle::buy_ticket(&mut raffle, payment, utf8(ticket_commit), &clock, test_scenario::ctx(scenario));
+
+                test_scenario::return_shared(clock);
+                test_scenario::return_shared(raffle);
+            };
+            
+            i = i + 1;
+        };
+        scenario
+    }
+
+    #[test_only]
+    public fun when_time_passes(scenario: &mut Scenario, end_time: u64): &mut Scenario {
+        scenario.next_tx(base::admin());
         {
-            let ticket_commit =  *vector::borrow(&to_commit, i);
-
-            let mut raffle = test_scenario::take_shared<Raffle>(scenario);
-            let payment = test_scenario::take_from_sender<Coin<SUI>>(scenario);
             let mut clock = test_scenario::take_shared<Clock>(scenario);
-            
-            // Increment clock
-            // clock::increment_for_testing(&mut clock, START_TIME + 1);
-            
-            raffle::buy_ticket(&mut raffle, payment, utf8(ticket_commit), &clock, test_scenario::ctx(scenario));
+            clock::set_for_testing(&mut clock, end_time);
+            test_scenario::return_shared(clock);
+        };
+        scenario
+    }
 
+    #[test_only]
+    public fun when_drawing_winner(scenario: &mut Scenario, admin: address): &mut Scenario {
+        test_scenario::next_tx(scenario, admin);
+        {
+            let mut raffle = test_scenario::take_shared<Raffle>(scenario);
+            let clock = test_scenario::take_shared<Clock>(scenario);
+            
+
+            // Create and use random object
+            random::create_for_testing(scenario.ctx());
+
+            let luck = test_scenario::take_shared<Random>(scenario);
+            raffle::draw_winner(&mut raffle, &clock, &luck, test_scenario::ctx(scenario));
+            
             test_scenario::return_shared(clock);
             test_scenario::return_shared(raffle);
-
+            test_scenario::return_shared(luck);
         };
-        i = i + 1;
-    };
-    scenario
-}
-
+        scenario
+    }
 
     // === Then functions ===
     #[test_only]

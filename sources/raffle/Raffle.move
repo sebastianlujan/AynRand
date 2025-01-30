@@ -182,9 +182,7 @@ public entry fun draw_winner(raffle: &mut Raffle, clock: &Clock, r: &Random, ctx
     assert!(ticket_count > 0, E::no_tickets_sold());
 
     // Generate random index using Sui's Random module
-    let mut generator = random::new_generator(r, ctx);
-    let random_value = random::generate_u256(&mut generator);
-    let random_index = (random_value % (ticket_count as u256) as u64);
+    let random_index = generate_random_index(ticket_count, r, ctx);
 
     // Get winner address using table entries
     let mut addresses = vector::empty();
@@ -203,6 +201,12 @@ public entry fun draw_winner(raffle: &mut Raffle, clock: &Clock, r: &Random, ctx
         winner,
         clock::timestamp_ms(clock),
     );
+}
+
+fun generate_random_index(ticket_count: u64, r: &Random, ctx: &mut TxContext): u64 {
+    let mut generator = random::new_generator(r, ctx);
+    let random_value = random::generate_u256(&mut generator);
+    ((random_value % (ticket_count as u256) as u64))
 }
 
 /// Check if the raffle has started
