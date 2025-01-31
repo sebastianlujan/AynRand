@@ -1,0 +1,30 @@
+# .github/workflows/test.yml
+name: Test Suite
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: aynrand
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run tests
+      run: |
+        make test
+        sui move coverage summary
+        
+    - name: Check coverage
+      run: |
+        coverage=$(sui move coverage summary | grep -oP 'Total coverage: \K\d+')
+        if [ $coverage -lt 80 ]; then
+          echo "Code coverage below 80% (current: $coverage%)"
+          exit 1
+        fi
