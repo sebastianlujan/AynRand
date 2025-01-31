@@ -17,7 +17,9 @@ module aynrand::raffle_test {
     #[test]
     fun it_should_complete_raffle_e2e() {
         let (admin, mut scenario) = fw::setup_test();
-        let (ayn, guys) = base::generate_signers(base::default_amount());
+        let (_, guys) = base::generate_signers(base::default_amount());
+
+        let ayn = base::user();
         let commitments = base::generate_ten_commitments();
 
         scenario
@@ -36,7 +38,8 @@ module aynrand::raffle_test {
 
             // Then: Verify outcome
             .then_winner_selected(admin)
-            .then_prize_claimed();
+            .then_prize_claimed(@0x05);
+
 
         scenario.end();
     }

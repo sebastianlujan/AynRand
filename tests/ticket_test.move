@@ -1,4 +1,5 @@
 #[test_only]
+#[allow(unused_function)]
 module aynrand::ticket_test {
 
     use sui::test_scenario::{Self, Scenario};
@@ -39,7 +40,7 @@ module aynrand::ticket_test {
 
         scenario.end();
     }
-
+    
     #[test]
     #[expected_failure(abort_code = test_scenario::EEmptyInventory)]
     fun it_should_mint_new_ticket_and_burn() {

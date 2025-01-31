@@ -35,8 +35,11 @@ module aynrand::prize_pool {
         coin::from_balance(balance::withdraw_all(&mut pool.balance), ctx)
     }
 
-    #[test_only]
-    public fun destroy_zero(pool: PrizePool) {
+    public fun balance(pool: &PrizePool): &Balance<SUI> {
+        &pool.balance
+    }
+
+    public fun destroy_empty(pool: PrizePool) {
         let PrizePool { balance } = pool;
         balance::destroy_zero(balance);
     }

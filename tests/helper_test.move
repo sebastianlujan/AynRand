@@ -1,6 +1,4 @@
 #[test_only]
-#[allow(unused_use)]
-
 module aynrand::helper_test {
 
     use std::debug;
@@ -19,17 +17,15 @@ module aynrand::helper_test {
     use sui::table;
 
     // === Local Code errors ===
-    const START_TIME: u64 = 1000;
     const TICKET_NAME_MISMATCH: u64 = 1;
     const TICKET_OWNER_MISMATCH: u64 = 2;
     const TICKET_ACTIVE_MISMATCH: u64 = 3;    
     const TICKET_NUMBER_MISMATCH: u64 = 4;
-    const TICKET_NOT_FOUND: u64 = 5;
 
     #[test_only]
     public fun setup_test(): (address, Scenario) {
         let admin = base::admin();
-        let mut scenario = test_scenario::begin(admin);
+        let scenario = test_scenario::begin(admin);
         (admin, scenario)
     }
 
@@ -174,9 +170,6 @@ module aynrand::helper_test {
                 let payment = test_scenario::take_from_sender<Coin<SUI>>(scenario);
                 let clock = test_scenario::take_shared<Clock>(scenario);
                 
-                // Increment clock
-                // clock::increment_for_testing(&mut clock, START_TIME + 1);
-                
                 raffle::buy_ticket(&mut raffle, payment, utf8(ticket_commit), &clock, test_scenario::ctx(scenario));
 
                 test_scenario::return_shared(clock);
@@ -201,7 +194,7 @@ module aynrand::helper_test {
 
     #[test_only]
     public fun when_drawing_winner(scenario: &mut Scenario, user: address): &mut Scenario {
-        
+
         // First transaction: System creates/shared the Random
         test_scenario::next_tx(scenario, @0x0); // <-- SYSTEM ADDRESS
         {
@@ -214,8 +207,7 @@ module aynrand::helper_test {
         {
             let mut raffle = test_scenario::take_shared<Raffle>(scenario);
             let clock = test_scenario::take_shared<Clock>(scenario);
-            random::create_for_testing(scenario.ctx());
-
+    
             // Create and use random object
             let luck = test_scenario::take_shared<Random>(scenario);
             raffle::draw_winner(&mut raffle, &clock, &luck, test_scenario::ctx(scenario));
@@ -233,19 +225,23 @@ module aynrand::helper_test {
         scenario.next_tx(admin);
         {
             let ticket = scenario.take_from_sender<Ticket>();
+
+            // Verify ticket properties
+            assert!(ticket::name(&ticket) == utf8(b"TEST"), TICKET_NAME_MISMATCH);
+            assert!(ticket::owner(&ticket) == admin, TICKET_OWNER_MISMATCH);
+            assert!(*ticket::is_active(&ticket), TICKET_ACTIVE_MISMATCH);
+            
             test_scenario::return_to_sender(scenario, ticket);
         };
         scenario
     }
 
+
     #[test_only]
     public fun then_winner_selected(scenario: &mut Scenario, admin: address): &mut Scenario {
         scenario.next_tx(admin);
         {
-            let raffle = test_scenario::take_shared<Raffle>(scenario);
-            let winner = raffle::get_winner(&raffle);
-            std::debug::print(&winner);
-
+            let raffle = test_scenario::take_shared<Raffle>(scenario);    
             assert!(raffle::has_winner(&raffle), 0);
             test_scenario::return_shared(raffle);
         };
@@ -253,12 +249,21 @@ module aynrand::helper_test {
     }
 
     #[test_only]
-    public fun then_prize_claimed(scenario: &mut Scenario): &mut Scenario {
-        test_scenario::next_tx(scenario, base::admin());
+    public fun then_prize_claimed(scenario: &mut Scenario, winner: address): &mut Scenario {
+        test_scenario::next_tx(scenario, winner);
         {
-            let raffle = test_scenario::take_shared<Raffle>(scenario); 
+            let mut raffle = test_scenario::take_shared<Raffle>(scenario);
+            let clock = test_scenario::take_shared<Clock>(scenario); 
+            
+            //get winner, and claim prize
+            assert!(raffle::has_winner(&raffle), 0);
+            assert!(raffle::get_winner(&raffle) == winner, 0);
+            
+            raffle::claim_prize(&mut raffle, &clock, test_scenario::ctx(scenario));
             assert!(raffle::is_prize_claimed(&raffle), 0);
+
             test_scenario::return_shared(raffle);
+            clock::share_for_testing(clock);
         };
         scenario
     }

@@ -1,6 +1,3 @@
-//#[allow(lint(self_transfer))]
-#[allow(unused_function)]
-
 module aynrand::ticket {
 
     use std::string::{ String, utf8 };
@@ -113,10 +110,6 @@ module aynrand::ticket {
 
     public fun owner(self: &Ticket): &address {
         &self.owner
-    }
-
-    fun set_counter(self: &mut Counter, last_counter: u64) {
-        self.last_counter = last_counter;
     }
 
     public fun set_committed(self: &mut Ticket, number: String) {
