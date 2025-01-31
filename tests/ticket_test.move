@@ -1,9 +1,8 @@
 #[test_only]
+#[allow(unused_function)]
 module aynrand::ticket_test {
 
     use sui::test_scenario::{Self, Scenario};
-    use sui::clock;
-    use aynrand::base_test as base;
     use aynrand::helper_test as fw;
 
    
@@ -19,9 +18,8 @@ module aynrand::ticket_test {
 
         scenario
             .given_admin(admin)
-            .when_minting(admin);
-            
-        fw::then_ticket_exist(&mut scenario, admin);
+            .when_minting(admin)
+            .then_ticket_exist(admin);
         
         scenario.end();
     }
@@ -37,13 +35,12 @@ module aynrand::ticket_test {
             .given_admin(admin)
             .when_minting(admin)
             .when_minting(admin)
-            .when_minting(admin);
-            
-        fw::then_ticket_exist(&mut scenario, admin);
+            .when_minting(admin)
+            .then_ticket_exist(admin);
 
         scenario.end();
     }
-
+    
     #[test]
     #[expected_failure(abort_code = test_scenario::EEmptyInventory)]
     fun it_should_mint_new_ticket_and_burn() {
@@ -54,9 +51,8 @@ module aynrand::ticket_test {
         scenario
             .given_admin(admin)
             .when_minting(admin)
-            .when_burning(admin);
-            
-        fw::then_ticket_exist(&mut scenario, admin);
+            .when_burning(admin)
+            .then_ticket_exist( admin);
         
         scenario.end();
     }
@@ -68,4 +64,5 @@ module aynrand::ticket_test {
     use fun fw::given_admin as Scenario.given_admin;
     use fun fw::when_minting as Scenario.when_minting;
     use fun fw::when_burning as Scenario.when_burning;
+    use fun fw::then_ticket_exist as Scenario.then_ticket_exist;
 }

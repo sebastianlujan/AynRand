@@ -11,35 +11,36 @@ module aynrand::raffle_test {
 
     const START_TIME: u64 = 1000;
     const END_TIME: u64 = 2000;
-    const TICKET_AMOUNT: u64 = 100;
 
     // == End to End Test ==
 
+    #[test]
     fun it_should_complete_raffle_e2e() {
         let (admin, mut scenario) = fw::setup_test();
-        let (ayn, guys) = base::generate_signers(base::default_amount());
-        
+        let (_, guys) = base::generate_signers(base::default_amount());
+
+        let ayn = base::user();
         let commitments = base::generate_ten_commitments();
 
         scenario
 
-            // Given
+            // Given: Setup raffle
             .given_admin(admin)
             .given_clock( START_TIME - 1)
             .given_raffle(START_TIME, END_TIME, admin)
             .given_minted_tickets(admin, base::default_amount())
 
-            // When
+            // When: Execute raffle steps
             .when_funding_buyers(guys, base::default_price())
             .when_buyers_buy_tickets(guys, base::default_amount(), commitments)
             .when_time_passes(END_TIME + 1)
-            .when_drawing_winner(admin);
+            .when_drawing_winner(admin)
 
-            // Then
-            //.then_exactly_one_winner()
-            //.then_prize_distributed();
+            // Then: Verify outcome
+            .then_winner_selected(admin)
+            .then_prize_claimed(@0x05);
 
-        // Start Raffle
+
         scenario.end();
     }
 
@@ -73,7 +74,7 @@ module aynrand::raffle_test {
 
     // === Then functions ===
     use fun fw::then_ticket_exist as Scenario.then_ticket_exist;
-    //use fun fw::then_exactly_one_winner as Scenario.then_exactly_one_winner;
-    //use fun fw::then_prize_distributed as Scenario.then_prize_distributed;
+    use fun fw::then_winner_selected as Scenario.then_winner_selected;
+    use fun fw::then_prize_claimed as Scenario.then_prize_claimed;
 
 }

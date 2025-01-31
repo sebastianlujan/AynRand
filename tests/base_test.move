@@ -2,10 +2,10 @@
 #[allow(unused_use)]
 module aynrand::base_test {
     use sui::{ address, random };
-
+    use sui::event;
     
-    const ADMIN_ADDRESS: address = @0xCAFE;
-    const USER_ADDRESS_1: address = @0xA1CE;
+    const ADMIN_ADDRESS: address = @0xBABEB055;
+    const USER_ADDRESS_1: address = @0xA11CE;
     const USER_ADDRESS_2: address = @0xB000;
 
     /// 1 MIST represent 10^-9 Sui
@@ -36,6 +36,8 @@ module aynrand::base_test {
         vector::push_back(&mut commitments, b"0011303950");
         vector::push_back(&mut commitments, b"0008153250");
         vector::push_back(&mut commitments, b"0012214750");
+
+        
 
         commitments
     }
