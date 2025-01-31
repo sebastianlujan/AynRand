@@ -19,7 +19,7 @@ module aynrand::raffle_test {
         let (admin, mut scenario) = fw::setup_test();
         let (_, guys) = base::generate_signers(base::default_amount());
 
-        let ayn = base::user();
+        let ayn = @0x05;
         let commitments = base::generate_ten_commitments();
 
         scenario
@@ -38,7 +38,7 @@ module aynrand::raffle_test {
 
             // Then: Verify outcome
             .then_winner_selected(admin)
-            .then_prize_claimed(@0x05);
+            .then_prize_claimed(ayn);
 
 
         scenario.end();
@@ -56,7 +56,7 @@ module aynrand::raffle_test {
         scenario.end();
     }
 
-    /// Extending Scenario with framework functions
+    // Extending Scenario with framework functions
 
     // === Given functions ===
     use fun fw::given_admin as Scenario.given_admin;
