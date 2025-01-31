@@ -1,20 +1,17 @@
 #[test_only]
 module aynrand::helper_test {
 
-    use std::debug;
     use std::string::utf8;
     use sui::test_scenario::{Self, Scenario};
     use aynrand::base_test as base;
     
     use aynrand::ticket::{Self, AdminCap, Ticket, Counter};
     use aynrand::raffle::{Self, Raffle};
-    use aynrand::ticket_test;
 
     use sui::clock::{Self, Clock};
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::random::{Self, Random};
-    use sui::table;
 
     // === Local Code errors ===
     const TICKET_NAME_MISMATCH: u64 = 1;
