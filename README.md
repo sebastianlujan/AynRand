@@ -31,11 +31,8 @@ sequenceDiagram
 ```
 
 - The **Admin** begins the raffle by setting it up and creating tickets for people to purchase.
-
 - **Users** buy these tickets to enter the raffle, and their payments go into the **PrizePool**.
-
 - Once the raffle is over, the system randomly selects a winner.
-
 - The winner claims their prize, and the prize money is transferred to them from the **PrizePool**.
 
 A more detailed diagram can be found in the [docs](docs/state_diagram.md)
@@ -109,8 +106,8 @@ Sui is a blockchain that comes from the fork of the Libra development teams by M
 
 ## Design Decisions, Modularity:
 
-We started thinking with a top-to-bottom approach, a modular architecture for greater development flexibility, understanding that the shared object model is the most suitable for creating these structures.
-One important lesson learned in Move for Sui is that less is more.
+A top-to-bottom approach and a modular architecture were initially considered for greater development flexibility, with the shared object model understood to be the most suitable for creating these structures. 
+An important lesson learned in Move for Sui is that less is more.
 
 ## Key Learnings
 
@@ -120,9 +117,7 @@ One important lesson learned in Move for Sui is that less is more.
 Regarding defined responsibilities, the raffle handles ticket creation and purchase, as well as prize claim and draw winner. 
 Several structures where composed to enhance understanding and provide versatility to the architecture.
 
-This way is how we define a ticket vault, a prize pool, a raffle config, and a raffle state, and the ticket as a dependency of the raffle.
-
 ## Final thoughts:
-Sui can be a great language for defining real-world assets and financial services, for defining transparency and identity schemes, and for finance. Additionally, consume-on-demand models can be derived, for storage beyond classic blockchain applications and thinking more about communications, due to its compatibility with SNARKs and zero-knowledge proofs, which enables new architectures and greater information compression and speed.
-
-The challenge helped me learn about SUI and Move, improve my technical skills, and understand how to design scalable and secure solutions. Even though there were challenges, the lessons learned will be useful for future projects.
+Sui can be seen as a great language for defining real-world assets and financial services, as well as for ensuring transparency and identity schemes. 
+Additionally, consume-on-demand models can be derived for storage beyond classic blockchain applications, with a stronger focus on communications. 
+This is made possible by its compatibility with SNARKs and zero-knowledge proofs, which enable new architectures and greater information compression and speed.
