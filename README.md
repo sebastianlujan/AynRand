@@ -1,7 +1,7 @@
 # Aynrand
 
-| ![Rather Labs Logo](assets/logo.svg) | **Interview Challenge**: Raffle System |
-|--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| ![Rather Labs Logo](assets/logo.svg) |
+|--------------------------------------|
 
 
 This is a Raffle architecture for Sui move language using good practices for modularity and separation of concerns, implementing a raffle system based on the lesson from the book of move https://move-book.com/ , and lessons from the paper 
