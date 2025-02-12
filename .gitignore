@@ -23,3 +23,6 @@ output.bpl
 target/
 node_modules/
 .env
+
+.coverage*
+.trace
