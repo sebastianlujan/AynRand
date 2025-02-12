@@ -12,11 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Set up Docker
-      run: |
-        curl -fsSL https://get.docker.com -o get-docker.sh
-        sudo sh get-docker.sh
   
     - name: Build Docker image
       run: docker build -t aynrand .
@@ -39,7 +34,6 @@ jobs:
           echo "::error::Code coverage below ${MIN_COVERAGE}% (current: ${coverage}%)"
           exit 1
         fi
-
 
         make test
         sui move coverage summary
