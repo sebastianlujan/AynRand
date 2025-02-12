@@ -3,21 +3,45 @@ name: Test Suite
 
 on: [push, pull_request]
 
+env:
+  MIN_COVERAGE: 70
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: aynrand
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run tests
+    - name: Set up Docker
       run: |
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+        sudo systemctl start docker
+  
+    - name: Build Docker image
+      run: docker build -t aynrand .
+
+    - name: Run tests and coverage
+      run: |
+        output=$(docker run -v $(pwd):/app aynrand sh -c "make test && sui move coverage summary")
+        echo "$output"
+
+        # Extract coverage percentage
+        coverage=$(echo "$output" | grep -oP 'Total coverage: \K\d+')
+        if [ -z "$coverage" ]; then
+          echo "::error::Failed to parse code coverage"
+          exit 1
+        fi
+
+        echo "Code coverage: $coverage%"
+        # Check coverage threshold
+        if [ $coverage -lt $MIN_COVERAGE ]; then
+          echo "::error::Code coverage below ${MIN_COVERAGE}% (current: ${coverage}%)"
+          exit 1
+        fi
+
+
         make test
         sui move coverage summary
         

@@ -28,7 +28,7 @@ KEY_LIST=$(KEY) generate ed25519
 EMOJI_BUILD=📦
 EMOJI_TEST=🧪
 EMOJI_CLEAN=🧹
-#EMOJI_COV=✅
+EMOJI_COV=📊
 EMOJI_FAUCET=🫰
 EMOJI_GAS=⛽
 EMOJI_KEY=🔑
@@ -62,15 +62,15 @@ clean:
 	rm -rf build
 	rm -rf target
 
-#coverage:
-##	@echo "$(EMOJI_COV) Generating test coverage reports..."
-##	$(TEST)
-##	$(COV) || echo "No coverage data available"
+coverage:
+	@echo "$(EMOJI_COV) Generating test coverage reports..."	
+	$(TEST)
+	$(COV) || echo "No coverage data available"
 
 ## Operational Commands
 faucet:
 	@echo "$(EMOJI_FAUCET) Gimme the fake money..."
-	# $(FAUCET)
+	$(FAUCET)
 	@echo "$(EMOJI_GAS) Show me the gass..."
 	$(GAS)
 	
@@ -106,8 +106,7 @@ help:
 	@echo "  build     - $(EMOJI_BUILD) Compile the Move package"
 	@echo "  test      - $(EMOJI_TEST) Run project tests"
 	@echo "  clean     - $(EMOJI_CLEAN) Remove build artifacts"
-
-## @echo "  coverage  - $(EMOJI_COV) Generate test coverage report"
+	@echo "  coverage  - $(EMOJI_COV) Generate test coverage report"
 	@echo "  faucet    - $(EMOJI_FAUCET) Request testnet tokens"
 	@echo "  publish   - $(EMOJI_PUBLISH) Publish Move package"
 
