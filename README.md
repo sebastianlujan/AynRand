@@ -8,8 +8,6 @@ This is a Raffle architecture for Sui move language using good practices for mod
 "Building Random, Fair, and Verifiable Games on Blockchain"
 https://arxiv.org/pdf/2310.12305
 
-The idea is to implement a raffle system that is random, fair, and verifiable simulating issues and PR like the ones existing in the real world.
-
 The name for Aynrand comes from the idea of randomness and fairness, and the fact that the system is not deterministic, but rather random, also the idea of implement a descentralized DRAND Number generator for a next iteration.
 
 ## System Architecture
@@ -105,35 +103,22 @@ The system uses Sui Move's object model and implements best practices from:
 - [The Move Book](https://move-book.com/)
 - ["Building Random, Fair, and Verifiable Games on Blockchain"](https://arxiv.org/pdf/2310.12305)
 
-# Lessons Learned
-In this project, I faced many challenges like managing time, resources, learning from documentation, and understanding production projects. I had to decide whether to use Sui or Aptos, as both use the Move language but with differences. I found Sui to be a better and more robust solution based on the toolkit, code readability, and the TVL and ecosystem.
-
-To learn the language, I started with the Move book and official documentation, then moved on to reading example code and projects like Kapy Adventure. I also watched videos about Move presentations at Certora.
+## Technical Insights
 
 Sui is a blockchain that comes from the fork of the Libra development teams by Meta, defining an architecture for Diem, their currency, based on Byzantine Fault Tolerance properties and a BLS scheme through validators for ID assignment and transactional object verification. This is very different from the classic non-scalable blockchain model, as it uses a directed acyclic graph model, allowing for greater scalability and becoming the most componentizable.
 
 ## Design Decisions, Modularity:
 
-After understanding the language and the skill mechanisms for key, drop, store, and copy, and reviewing the differences between Rust and Move, I also understood the security mechanisms of capabilities, as well as visibility and shared objects.
-I started thinking with a top-to-bottom approach, a modular architecture for greater development flexibility, understanding that the shared object model is the most suitable for creating these structures.
-
-One important lesson learned in Move for Sui is that less is more, so the initial plan to create a reusable module for testing was discarded, and I moved to the test scenario of the Sui framework.
+We started thinking with a top-to-bottom approach, a modular architecture for greater development flexibility, understanding that the shared object model is the most suitable for creating these structures.
+One important lesson learned in Move for Sui is that less is more.
 
 ## Key Learnings
 
-The assumption of similarity between Rust and Move challenged the initial plan to create a reusable module for testing, and I moved to the test scenario of the Sui framework.
-
-It would have been better to implement a toy project first that takes 80% of the necessary features to quickly understand the language and its perks related to its skill system, which did not allow me to meet the entire development lifecycle, like testing, automated coverage and deployment, using github actions.
-
-But some precommit and pre validation workflows for conventional commits and gpg verification were implemented.
-
-Coverage need it a custom sui cli compile and run, and this remains out of the scope of this project.
-
-
-A change of scope from designing the solution based on Drand, which pivoted due to poor UX from generating a random number every 30 seconds, to designing a scheme based on Merkle trees for winner verification and random number generation based on BLS signatures, was discarded due to extra time in understanding the language and resolving errors.
-
-One of the fundamental features of this language is returning objects that do not have drop, for example, and destroying them one by one. Another unique feature is the OTW, one-time witness, which simulates a single execution and refers to the concept of a constructor.
-Regarding defined responsibilities, the raffle handles ticket creation and purchase, as well as prize claim and draw winner. I composed several structures for better understanding and versatility for the architecture.
+- The assumption of similarity between Rust and Move challenged the initial plan to create a reusable module for testing, and I moved to the test scenario of the Sui framework.
+- One of the fundamental features of this language is returning objects that do not have drop, for example, and destroying them one by one.
+- Another unique feature is OTW, one-time witness, which simulates a single execution and refers to the concept of a constructor.
+Regarding defined responsibilities, the raffle handles ticket creation and purchase, as well as prize claim and draw winner. 
+Several structures where composed to enhance understanding and provide versatility to the architecture.
 
 This way is how we define a ticket vault, a prize pool, a raffle config, and a raffle state, and the ticket as a dependency of the raffle.
 
