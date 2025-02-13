@@ -47,11 +47,12 @@ module aynrand::events;
     public fun emit_winner_drawn(id: ID, winner: address, timestamp: u64) {
         event::emit(WinnerDrawn {id, winner, timestamp});
     }
-
+    
     public fun emit_commited_ticket(id: ID, commit: String, timestamp: u64) {
         event::emit(TicketCommitted {id, commit, timestamp});
     }
 
     public fun emit_claimed_prize(id: ID, winner: address, prize: u64, timestamp: u64) {
         event::emit(PrizeClaimed {id, winner, prize, timestamp});
+
     }
