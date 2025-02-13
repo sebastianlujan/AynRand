@@ -14,7 +14,7 @@ dont_trust() {
         exit 1
     fi
 
-    echo "Commit signed! 🔑"
+    echo "🔑 Commit signed!"
 
 }
 

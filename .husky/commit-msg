@@ -4,6 +4,6 @@
 
 # Run commit validation
 check_commit_convention "$1"
-dont-trust
+dont_trust
 
-echo "Valid commit format ✅"
+echo "✅ Valid commit format"
