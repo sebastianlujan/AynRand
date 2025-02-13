@@ -17,5 +17,3 @@ dont_trust() {
     echo "🔑 Commit signed!"
 
 }
-
-dont_trust
