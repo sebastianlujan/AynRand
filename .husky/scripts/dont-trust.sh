@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
 # Verify if the commit is signed, why not?
 
 # -1 is the first log message

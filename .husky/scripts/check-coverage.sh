@@ -1,3 +1,7 @@
+#!/usr/bin/env bash  
+# Exit on error, unset vars, and pipeline failures
+set -euo pipefail
+
 MIN_COVERAGE=70
 
 check_coverage() {
@@ -12,6 +16,7 @@ check_coverage() {
     # Compare values using AWK
     awk -v cov="$coverage" -v min="$MIN_COVERAGE" '
         BEGIN {
+
             if (cov >= 90 ) {
                 printf "%s🌟 Excellent coverage: %.1f%% (Minimum: %d%%)%s\n", 
                 green, cov, min, nc
@@ -21,12 +26,13 @@ check_coverage() {
             } if (cov >= min) {
                 printf "✅ Coverage: %.1f%% (Minimum: %d%%)\n", cov, min
                 exit 0
+            } else if (cov == "" || cov !~ /^[0-9]+(\.[0-9]+)?$/ ) {
+                print "❌ Error: Coverage not found"
+                exit 2
             } else {
                 printf "❌ Coverage failed: %.1f%% < %d%%\n", cov, min
+                exit 1
             }
         }'
     exit $?
 }
-
-
-check_coverage

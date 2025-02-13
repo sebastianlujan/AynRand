@@ -1,4 +1,7 @@
-COMMIT_MSG_FILE=$1
+#!/usr/bin/env bash  
+set -euo pipefail
+
+COMMIT_MSG_FILE="${1:-}" 
 COMMIT_MSG=$(cat $COMMIT_MSG_FILE)
 
 _validate_commit_message() {
@@ -11,7 +14,6 @@ _validate_commit_message() {
 # types and structure for conventional commits
 # https://www.conventionalcommits.org/en/v1.0.0/
 # https://github.com/conventional-changelog/commitlint/#what-is-com/mitlint
-
 
 check_commit_convention() {
 
@@ -30,5 +32,3 @@ check_commit_convention() {
     exit 1
   fi
 }
-
-check_commit_convention

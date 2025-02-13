@@ -1,3 +1,6 @@
+#!/usr/bin/env bash  
+set -euo pipefail
+
 # Color definitions
 YELLOW='\033[1;33m'
 NC='\033[0m'
@@ -28,5 +31,3 @@ check_testing() {
     '}
     exit 0
 }
-
-check_testing
