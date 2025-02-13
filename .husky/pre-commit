@@ -1,6 +1,10 @@
-# process
+# Pre commit hook, before commit the test will meet the aceptance criteria
+# The code will be linted and formatted, the code will be tested
+# The code coverage will be checked
 
-#cargo clippy --all-targets --all-features -- -D warnings
-cargo test
+. $(dirname "$0")/scripts/check-coverage.sh
+. $(dirname "$0")/scripts/check-testing.sh
 
-cargo doc --no-deps
+# Run check coverage
+check_coverage
+check_testing
