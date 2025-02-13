@@ -1,8 +1,10 @@
 #!/usr/bin/env bash  
 set -euo pipefail
 
-COMMIT_MSG_FILE="${1:-}" 
-COMMIT_MSG=$(cat $COMMIT_MSG_FILE)
+COMMIT_MSG_FILE="$1"  
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+TYPES="feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert"
+SCOPE="\(.+\)"
 
 _validate_commit_message() {
   if [ ! -f "$COMMIT_MSG_FILE" ]; then
@@ -20,9 +22,6 @@ check_commit_convention() {
   local commit_msg_file="$1"
   _validate_commit_message "$commit_msg_file"
 
-  TYPES="feat|fix|chore|docs|test|style|refactor|perf|build|ci|revert"
-  SCOPE="\(.+\)"
-
   echo "Commit message: $COMMIT_MSG"
 
   if ! echo "$COMMIT_MSG" | grep -qE "^($TYPES)($SCOPE)?:"; then
@@ -32,3 +31,6 @@ check_commit_convention() {
     exit 1
   fi
 }
+
+# Main execution
+check_commit_convention "$COMMIT_MSG_FILE"

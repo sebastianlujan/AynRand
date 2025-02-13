@@ -1,5 +1,5 @@
 #!/usr/bin/env bash  
-# Exit on error, unset vars, and pipeline failures
+# Exit on error, unset vars, and pipeline failures, like strict mode in JS
 set -euo pipefail
 
 MIN_COVERAGE=70
