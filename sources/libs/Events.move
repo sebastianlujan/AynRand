@@ -2,6 +2,7 @@ module aynrand::events;
 
     /// Dependencies
     use sui::event;
+    use std::string::String;
 
     /// Events data
     public struct TicketMinted has copy, drop {
@@ -21,11 +22,17 @@ module aynrand::events;
         timestamp: u64
     }
 
-    public struct PrizeClaimedByAdmin has copy, drop {
+    public struct TicketCommitted has copy, drop {
         id: ID,
-        admin: address,
-        amount: u64,
-        timestamp: u64,
+        commit: String,
+        timestamp: u64
+    }
+
+    public struct PrizeClaimed has copy, drop {
+        id: ID,
+        winner: address,
+        prize: u64,
+        timestamp: u64
     }
 
     /// Event emiter
@@ -40,7 +47,12 @@ module aynrand::events;
     public fun emit_winner_drawn(id: ID, winner: address, timestamp: u64) {
         event::emit(WinnerDrawn {id, winner, timestamp});
     }
+    
+    public fun emit_commited_ticket(id: ID, commit: String, timestamp: u64) {
+        event::emit(TicketCommitted {id, commit, timestamp});
+    }
 
-    public fun emit_prize_claimed_by_admin(id: ID, admin: address, amount: u64, timestamp: u64) {
-        event::emit(PrizeClaimedByAdmin { id, admin, amount, timestamp });
+    public fun emit_claimed_prize(id: ID, winner: address, prize: u64, timestamp: u64) {
+        event::emit(PrizeClaimed {id, winner, prize, timestamp});
+
     }

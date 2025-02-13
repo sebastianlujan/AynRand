@@ -1,19 +1,19 @@
-#[allow(lint(self_transfer))]
-
 module aynrand::raffle;
-
+ 
 use aynrand::errors as E;
 use aynrand::events;
-use aynrand::ticket::{Self, Ticket, AdminCap};
-use std::debug;
+use aynrand::ticket::{Self, Ticket, AdminCap, Counter};
+use aynrand::prize_pool::{Self, PrizePool};
+
 use std::string::String;
-use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin::{Self, Coin};
+use sui::dynamic_object_field;
+use sui::random::{Self, Random};
 use sui::sui::SUI;
 use sui::table::{Self, Table};
-use sui::random::{Self, Random };
-
+use std::hash::{sha3_256};
+use std::bcs::{to_bytes};
 
 const DEFAULT_TICKET_PRICE: u64 = 100_000_000;
 
@@ -26,12 +26,9 @@ public struct Raffle has key, store {
 }
 
 public struct TicketVault has store {
-    buyed_tickets: Table<address, Ticket>,
+    buyed_tickets: Table<address, Ticket>, 
     available_tickets: vector<ID>,
-}
-
-public struct PrizePool has store {
-    balance: Balance<SUI>,
+    participants: vector<address>,
 }
 
 public struct RaffleConfig has store {
@@ -44,8 +41,8 @@ public struct RaffleConfig has store {
 public struct RaffleState has store {
     winner: Option<address>,
     claimed: bool,
+    total_participants: u64, //cache for quick access
 }
-
 
 // Define the possible states of the raffle
 public enum RaffleLifecycle has copy, drop {
@@ -54,6 +51,8 @@ public enum RaffleLifecycle has copy, drop {
     Ended,
     WinnerDrawn,
 }
+
+// === Constructors === 
 
 /// Create a new raffle
 public fun create(_cap: &AdminCap, start_time: u64, end_time: u64, ctx: &mut TxContext): Raffle {
@@ -72,6 +71,7 @@ public entry fun mint_tickets_to_raffle(
     raffle: &mut Raffle,
     amount: u64,
     name: String,
+    counter: &mut Counter,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -80,15 +80,20 @@ public entry fun mint_tickets_to_raffle(
     assert!(state == RaffleLifecycle::NotStarted, E::invalid_state_transition());
 
     let mut i = 0;
+    
     while (i < amount) {
-        let minted_ticket = ticket::mint(_cap, name, i, ctx);
+        let minted_ticket = ticket::mint(_cap, counter, name, i, ctx);
         let ticket_id = object::id(&minted_ticket);
-        debug::print(&minted_ticket);
         vector::push_back(&mut raffle.tickets.available_tickets, ticket_id);
-        transfer::public_transfer(minted_ticket, tx_context::sender(ctx));
+        //transfer::public_transfer(minted_ticket, tx_context::sender(ctx));
+        
+        dynamic_object_field::add(&mut raffle.id, ticket_id, minted_ticket);
+
         i = i + 1;
     };
 }
+
+/// === Business Logic === 
 
 /// Buy a ticket for a raffle
 /// @param raffle_id: ID of the raffle to buy a ticket for
@@ -98,42 +103,62 @@ public entry fun mint_tickets_to_raffle(
 public entry fun buy_ticket(
     raffle: &mut Raffle,
     mut payment: Coin<SUI>,
+    ticket_to_commit: String,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
     let sender = tx_context::sender(ctx);
 
-    
     let state = get_lifecycle_state(raffle, clock);
     assert!(state == RaffleLifecycle::Active, E::invalid_state_transition());
 
     // Validate raffle state
-    assert!(!has_started(raffle, clock), E::raffle_started());
-    assert!(!has_ended(raffle, clock), E::raffle_ended());
-    assert!(has_price_below(coin::value(&payment)), E::insufficient_funds());
+    validate_raffle_state(raffle, clock, &payment);
 
-     // Validate state transition
+    // Validate state transition
     validate_state_transition(raffle, clock, RaffleLifecycle::Active);
 
     // Validate ticket state
-    assert!(!table::contains(&raffle.tickets.buyed_tickets, sender), E::duplicate_ticket());
+    assert!(!table::contains(&raffle.tickets.buyed_tickets, sender), E::duplicated_ticket());
     assert!(!vector::is_empty(&raffle.tickets.available_tickets), E::insufficient_tickets());
 
     // Process payment
-    let payment_value = coin::value(&payment);
-    if (payment_value > raffle.config.price) {
-        let refund = coin::split(&mut payment, payment_value - raffle.config.price, ctx);
-        transfer::public_transfer(refund, sender);
-    };
+    process_payment(raffle, &mut payment, ctx);
+
+    vector::push_back(&mut raffle.tickets.participants, sender);
+    raffle.state.total_participants = raffle.state.total_participants + 1;
+
+    // Get and prepare ticket
+    let ticket_id = vector::pop_back(&mut raffle.tickets.available_tickets);
+    let mut ticket = dynamic_object_field::remove(&mut raffle.id, ticket_id);
+    
+    commit_ticket(ticket_to_commit, &mut ticket);
+    table::add(&mut raffle.tickets.buyed_tickets, sender, ticket);
 
     // handle prize pool
-    balance::join(&mut raffle.prize.balance, coin::into_balance(payment));
+    prize_pool::add_funds(&mut raffle.prize, payment);
 
     events::emit_buy_ticket(
         object::uid_to_inner(&raffle.id),
         sender,
         clock::timestamp_ms(clock),
     );
+}
+
+fun process_payment(raffle: &Raffle, payment: &mut Coin<SUI>, ctx: &mut TxContext) {
+    let payment_value = coin::value(payment);
+    if (payment_value > raffle.config.price) {
+
+        let split_amount = payment_value - raffle.config.price;
+
+        let refund = coin::split(payment, split_amount, ctx);
+        transfer::public_transfer(refund, tx_context::sender(ctx));
+    };
+}
+
+fun commit_ticket(ticket_to_commit: String, ticket: &mut Ticket) {
+    assert!(is_unique_ticket_number(ticket, ticket_to_commit), E::duplicated_ticket());
+    ticket::set_committed(ticket, ticket_to_commit);
 }
 
 /// WARNING: Current random number generation is not secure enough for production use.
@@ -147,44 +172,73 @@ public entry fun buy_ticket(
 /// @param r: Random object for secure number generation
 /// @param ctx: Transaction context for sender info
 #[allow(lint(public_random))]
-public entry fun draw_winner(
-    raffle: &mut Raffle,
-    clock: &Clock,
-    r: &Random,
-    ctx: &mut TxContext
-) {
+public entry fun draw_winner(raffle: &mut Raffle, clock: &Clock, r: &Random, ctx: &mut TxContext) {
     // Validate state transition
     validate_state_transition(raffle, clock, RaffleLifecycle::Ended);
     assert!(option::is_none(&raffle.state.winner), E::winner_already_drawn());
-    
+
     // Get total number of tickets
-    let ticket_count = table::length(&raffle.tickets.buyed_tickets);
-    assert!(ticket_count > 0, E::no_tickets_sold());
-    
+    let participants_count = raffle.state.total_participants;
+    assert!(participants_count > 0, E::no_tickets_sold());
+
     // Generate random index using Sui's Random module
-    let mut generator = random::new_generator(r, ctx);
-    let random_value = random::generate_u256(&mut generator);
-    let random_index = (random_value % (ticket_count as u256) as u64);
-    
-    // Get winner address using table entries
+    let random_index = generate_random_index(participants_count, r, ctx);
+
+    // Get winner address using participants vector
     let mut addresses = vector::empty();
-    let addr = tx_context::sender(ctx);
-    if (table::contains(&raffle.tickets.buyed_tickets, addr)) {
-        vector::push_back(&mut addresses, addr);
+    let participants = &raffle.tickets.participants;
+    let mut i = 0;
+
+    while (i < vector::length(participants)) {
+        let addr = *vector::borrow(participants, i);
+        if (table::contains(&raffle.tickets.buyed_tickets, addr)) {
+            vector::push_back(&mut addresses, addr);
+        };
+        i = i + 1;
     };
-    
-    // Set winner
-    let winner = *vector::borrow(&addresses, random_index);
-    assert!(table::contains(&raffle.tickets.buyed_tickets, winner), 0);
+
+    let winner = *vector::borrow(&raffle.tickets.participants, random_index);
+    assert!(table::contains(&raffle.tickets.buyed_tickets, winner), E::invalid_winner());
+
     raffle.state.winner = option::some(winner);
-    
+
     events::emit_winner_drawn(
         object::uid_to_inner(&raffle.id),
         winner,
-        clock::timestamp_ms(clock)
+        clock::timestamp_ms(clock),
     );
 }
 
+/// Claim the prize for the winner
+public fun claim_prize(raffle: &mut Raffle, clock: &Clock, ctx: &mut TxContext) {
+    
+    // Validate winner and prize claim
+    let winner = get_winner(raffle);
+    assert!(tx_context::sender(ctx) == winner, E::invalid_winner());
+    assert!(!is_prize_claimed(raffle), E::prize_already_claimed());
+
+    // Withdraw prize using PrizePool functions
+    assert!(prize_pool::has_funds(&raffle.prize), E::insufficient_prize_pool());
+    let treasury = prize_pool::withdraw_all(&mut raffle.prize, ctx);
+
+    events::emit_claimed_prize(
+        object::uid_to_inner(&raffle.id),
+        winner,
+        coin::value(&treasury),
+        clock::timestamp_ms(clock)
+    );
+
+    transfer::public_transfer(treasury, winner);
+    raffle.state.claimed = true;
+}
+
+/// Extremely insecure random number generation for testing purposes only
+entry fun generate_random_index(ticket_count: u64, r: &Random, ctx: &mut TxContext): u64 {
+    let mut generator = random::new_generator(r, ctx);
+    let random_value = random::generate_u64_in_range(&mut generator, 0, ticket_count );
+
+    (random_value )
+}
 
 /// Check if the raffle has started
 /// @param raffle: Raffle object
@@ -209,6 +263,19 @@ public fun has_price_below(payment: u64): bool {
     payment >= DEFAULT_TICKET_PRICE
 }
 
+/// Checks if the given ticket number is unique (not previously chosen)
+/// @param ticket: Reference to the ticket being checked
+/// @param candidate: the candidate being compared
+/// @return: True if the candidate is unique (not used), false if already taken
+public fun is_unique_ticket_number(ticket: &Ticket, candidate: String): bool {
+
+    let ticket_number_bytes = to_bytes(ticket::committed_hash(ticket));
+    let ticket_number = sha3_256(ticket_number_bytes);
+    let hashed_candidate = sha3_256(to_bytes(&candidate));
+    
+    (ticket_number != hashed_candidate)
+}
+
 /// Process the payment and get the refund if the payment is greater than the ticket price
 /// @param payment: Payment object containing SUI tokens
 /// @param ctx: Transaction context
@@ -228,13 +295,12 @@ fun new_ticket_vault(ctx: &mut TxContext): TicketVault {
     TicketVault {
         buyed_tickets: table::new(ctx),
         available_tickets: vector::empty(),
+        participants: vector::empty(),
     }
 }
 
 fun new_prize_pool(): PrizePool {
-    PrizePool {
-        balance: balance::zero(),
-    }
+    prize_pool::new()
 }
 
 fun new_raffle_config(start_time: u64, end_time: u64, admin: address): RaffleConfig {
@@ -250,6 +316,7 @@ fun new_raffle_state(): RaffleState {
     RaffleState {
         winner: option::none(),
         claimed: false,
+        total_participants: 0,
     }
 }
 
@@ -270,23 +337,33 @@ public fun create_with_time_for_testing(
 
 #[test_only]
 public fun test_destroy_raffle(raffle: Raffle) {
-    let Raffle { 
+    let Raffle {
         id,
-        tickets: TicketVault { buyed_tickets, available_tickets: _ },
-        prize: PrizePool { balance },
+        tickets: TicketVault { buyed_tickets, available_tickets: _, participants: _ },
+        prize,
         config: RaffleConfig { start_time: _, end_time: _, admin: _, price: _ },
-        state: RaffleState { winner: _, claimed: _ }
+        state: RaffleState { winner: _, claimed: _, total_participants: _ },
     } = raffle;
 
     table::destroy_empty(buyed_tickets);
     object::delete(id);
-    balance::destroy_zero(balance);
+    prize_pool::destroy_empty(prize);
+}
+
+#[test_only]
+public fun test_get_participants(raffle: &Raffle): vector<address> {
+    raffle.tickets.participants
+}
+
+#[test_only]
+public fun test_share_raffle(raffle: Raffle) {
+    transfer::share_object(raffle)
 }
 
 /// Get current state of the raffle
 public fun get_lifecycle_state(raffle: &Raffle, clock: &Clock): RaffleLifecycle {
     if (option::is_some(&raffle.state.winner)) {
-        RaffleLifecycle::WinnerDrawn
+        return RaffleLifecycle::WinnerDrawn
     } else if (has_ended(raffle, clock)) {
         RaffleLifecycle::Ended
     } else if (has_started(raffle, clock)) {
@@ -300,4 +377,26 @@ public fun get_lifecycle_state(raffle: &Raffle, clock: &Clock): RaffleLifecycle 
 fun validate_state_transition(raffle: &Raffle, clock: &Clock, expected: RaffleLifecycle) {
     let current_state = get_lifecycle_state(raffle, clock);
     assert!(current_state == expected, E::invalid_state_transition());
+}
+
+fun validate_raffle_state(raffle: &Raffle, clock: &Clock, payment: &Coin<SUI>) {
+    //assert!(!has_started(raffle, clock), E::raffle_started());
+    assert!(!has_ended(raffle, clock), E::raffle_ended());
+    assert!(has_price_below(coin::value(payment)), E::insufficient_funds());
+}
+
+public fun has_winner(raffle: &Raffle): bool {
+    option::is_some(&raffle.state.winner)
+}
+
+public fun is_prize_claimed(raffle: &Raffle): bool {
+    raffle.state.claimed
+}
+
+public fun get_winner(raffle: &Raffle): address {
+    *option::borrow(&raffle.state.winner)
+}
+
+public fun has_ticket(raffle: &Raffle, owner: address): bool {
+    table::contains(&raffle.tickets.buyed_tickets, owner)
 }
